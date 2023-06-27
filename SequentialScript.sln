@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33815.320
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SequentialScript", "SequentialScript\SequentialScript.csproj", "{54DB6D18-3423-40FF-9848-46C0BEB08D63}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{54DB6D18-3423-40FF-9848-46C0BEB08D63}.Debug|x64.ActiveCfg = Debug|x64
+		{54DB6D18-3423-40FF-9848-46C0BEB08D63}.Debug|x64.Build.0 = Debug|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {44C1FDAA-3752-47A7-9D39-B6CCD786CD6F}
+	EndGlobalSection
+EndGlobal
