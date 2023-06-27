@@ -1,4 +1,5 @@
 ﻿using Sandbox.Game.EntityComponents;
+using Sandbox.Game.Gui;
 using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
@@ -7,7 +8,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
+using System.Text.RegularExpressions;
 using VRage;
 using VRage.Collections;
 using VRage.Game;
@@ -25,8 +28,8 @@ namespace IngameScript
 
         // https://regex101.com/r/2Vysiy/4
         const string commandPattern = @"\[(?<command>.*?)\]\r?\n(?<body>[\s\S]*?)(?=\r?\n\[(.*?)\]|$)";
-        // https://regex101.com/r/DEsq3A/1
-        const string bodyPattern = @"(?:when\s+(?<when>.*?)\s+)?run\s+(?<run>.*?)\s+as\s+(?<var>@\w+|none)";
+        // https://regex101.com/r/DEsq3A/2
+        const string bodyPattern = @"(?:when\s+(?<when>.*?)\s+)?run\s+(?<run>.*?)\s+as\s+(?<var>@\w+|none);?";
         const string dependencesPattern = @"@\w+";
 
         static readonly System.Text.RegularExpressions.Regex commandRegex
@@ -36,6 +39,7 @@ namespace IngameScript
         static readonly System.Text.RegularExpressions.Regex dependencesRegex
             = new System.Text.RegularExpressions.Regex(dependencesPattern);
 
+
         public static IDictionary<string, InstructionCommand> Parse(string text)
         {
             var result = new Dictionary<string, InstructionCommand>();
@@ -44,13 +48,20 @@ namespace IngameScript
             foreach (System.Text.RegularExpressions.Match commandMatch in commandMatches)
             {
                 var commandName = commandMatch.Groups["command"].Value.Trim();
-                var bodyContent = commandMatch.Groups["body"].Value.Trim();
+                var bodyGroup = commandMatch.Groups["body"];
+                var bodyContent = bodyGroup.Value.Trim();
                 var instructionBlocks = new Dictionary<string, InstructionBlock>(StringComparer.OrdinalIgnoreCase);
                 var bodyMatches = bodyRegex.Matches(bodyContent);
+                var previousIndex = 0;
+                var lineCount = 1;
 
                 // Match blocks and its instructions.
+                lineCount += GetLineCount(text, 0, bodyGroup.Index);
                 foreach (System.Text.RegularExpressions.Match bodyMatch in bodyMatches)
                 {
+                    lineCount += CheckSyntax(bodyContent, previousIndex, bodyMatch.Index, lineCount);
+                    lineCount += GetLineCount(bodyContent, bodyMatch.Index, bodyMatch.Length);
+
                     var whenGroup = bodyMatch.Groups["when"]?.Value;
                     var runGroup = bodyMatch.Groups["run"].Value;
                     var alias = bodyMatch.Groups["var"].Value.Trim();
@@ -67,6 +78,8 @@ namespace IngameScript
                     {
                         var actions = runGroup
                             .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(line => line.Trim())
+                            .Where(line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith("//")) // Ignore empty lines and comments.
                             .Select((line, index) =>
                             {
                                 var lineItems = line.Trim().Split(new[] { "->" }, StringSplitOptions.RemoveEmptyEntries);
@@ -117,7 +130,9 @@ namespace IngameScript
                             });
                         }
                     }
+                    previousIndex = bodyMatch.Index + bodyMatch.Length;
                 }
+                CheckSyntax(bodyContent, previousIndex, bodyContent.Length, lineCount);
 
                 // Check dependences.
                 foreach (var item in instructionBlocks.Values)
@@ -134,6 +149,88 @@ namespace IngameScript
             }
             return result;
         }
+
+        /// <summary>
+        /// Calculates how many lines are in the specific substring.
+        /// </summary>
+        private static int GetLineCount(string content, int startIndex, int length)
+        {
+            int i = 0;
+            char previous = char.MinValue;
+            var substring = content.Substring(startIndex, length);
+
+            foreach (var chr in substring)
+            {
+                if (chr == '\r')
+                {
+                    i++;
+                }
+                else if (chr == '\n' && previous != '\r')
+                {
+                    i++;
+                }
+                previous = chr;
+            }
+            return i;
+        }
+
+        /// <summary>
+        /// Checks if there are unknown instructions in the specific string range and returns the number of lines.
+        /// </summary>
+        /// <param name="lineCount">Current line count, before start index.</param>
+        /// <returns></returns>
+        private static int CheckSyntax(string content, int startIndex, int endIndex, int lineCount)
+        {
+            var substring = content.Substring(startIndex, endIndex - startIndex);
+            var lines = substring.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None).Select(x => x.Trim());
+            var buffer = new System.Text.StringBuilder();
+            char previous = char.MinValue;
+            bool validate = false;
+            var i = 0;
+
+            foreach (var chr in substring)
+            {
+                if (chr == '\r')
+                {
+                    validate = true;
+                }
+                else if (chr == '\n')
+                {
+                    if (previous != '\r')
+                    {
+                        validate = true;
+                    }
+                }
+                else
+                {
+                    buffer.Append(chr);
+                }
+
+                if (validate)
+                {
+                    var line = buffer.ToString().Trim();
+
+                    if (string.IsNullOrEmpty(line))
+                    {
+                        // Empty line.
+                    }
+                    else if (line.StartsWith("//"))
+                    {
+                        // It is a comment.
+                    }
+                    else
+                    {
+                        throw new Exception($"Syntaxt exception near '{line}'. Line {lineCount + i}");
+                    }
+                    buffer.Clear();
+                    i++;
+                    validate = false;
+                }
+                previous = chr;
+            }
+            return i;
+        }
+
 
         /// <summary>
         /// Checks if dependences exists and if there are cyclical references.
