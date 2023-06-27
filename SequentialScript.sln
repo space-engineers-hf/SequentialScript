@@ -5,6 +5,8 @@ VisualStudioVersion = 17.6.33815.320
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SequentialScript", "SequentialScript\SequentialScript.csproj", "{54DB6D18-3423-40FF-9848-46C0BEB08D63}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CommonScript", "..\CommonScript\CommonScript\CommonScript.shproj", "{61EBA249-19F3-48B6-A25B-A4CEE90168BA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -18,5 +20,9 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {44C1FDAA-3752-47A7-9D39-B6CCD786CD6F}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		..\CommonScript\CommonScript\CommonScript.projitems*{54db6d18-3423-40ff-9848-46c0beb08d63}*SharedItemsImports = 4
+		..\CommonScript\CommonScript\CommonScript.projitems*{61eba249-19f3-48b6-a25b-a4cee90168ba}*SharedItemsImports = 13
 	EndGlobalSection
 EndGlobal
