@@ -38,17 +38,33 @@ namespace IngameScript
         /// <param name="grid">The <see cref="IMyBlockGroup"/> where all the blocks are placed.</param>
         /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
-        public static IEnumerable<Task> CreateTasks(IEnumerable<InstructionBlock> instructions, IEnumerable<IMyTerminalBlock> blockList)
+        public static IEnumerable<Task> CreateTasks(IEnumerable<InstructionBlock> instructions, IEnumerable<IMyTerminalBlock> blockList, IEnumerable<IMyBlockGroup> blockGroup)
         {
             var result = new List<Task>();
-            
+
             foreach (var instructionBlock in instructions)
             {
                 var actions = new List<TaskAction>();
 
                 foreach (var instruction in instructionBlock.Instructions)
                 {
-                    var blocks = blockList.Where(x => x.DisplayNameText.Equals(instruction.BlockName, StringComparison.OrdinalIgnoreCase));
+                    IEnumerable<IMyTerminalBlock> blocks = null;
+
+                    // Try get blocks.
+                    if (instruction.BlockName.StartsWith("*") || instruction.BlockName.EndsWith("*"))
+                    {
+                        var groups = blockGroup.Where(x => x.Name.Equals(instruction.BlockName.Substring(1, instruction.BlockName.Length - 2), StringComparison.OrdinalIgnoreCase));
+
+                        // Groups are between "*", but if it has not been found, it will check in block list.
+                        if (groups.Any())
+                        {
+                            blocks = groups.SelectMany(group => group.GetBlocks());
+                        }
+                    }
+                    if (blocks == null)
+                    {
+                        blocks = blockList.Where(x => x.DisplayNameText.Equals(instruction.BlockName, StringComparison.OrdinalIgnoreCase));
+                    }
                     if (blocks.Any())
                     {
                         foreach (var block in blocks)

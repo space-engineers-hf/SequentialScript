@@ -66,7 +66,7 @@ namespace IngameScript
                     if (commands.TryGetValue(argument, out command))
                     {
                         _tasks?.Cancel();
-                        _tasks = Tasks.CreateTasks(command.Body, GridTerminalSystem.GetBlocks());
+                        _tasks = Tasks.CreateTasks(command.Body, GridTerminalSystem.GetBlocks(), GridTerminalSystem.GetBlockGroups());
                         Runtime.UpdateFrequency = UpdateFrequency.Update10;
                         Echo("Started");
                     }
