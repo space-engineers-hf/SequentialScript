@@ -1,4 +1,5 @@
 ﻿using Sandbox.Game.EntityComponents;
+using Sandbox.Game.GameSystems.Chat;
 using Sandbox.Game.Gui;
 using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
@@ -10,7 +11,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Security.Policy;
 using System.Text;
-using System.Text.RegularExpressions;
 using VRage;
 using VRage.Collections;
 using VRage.Game;
@@ -30,28 +30,57 @@ namespace IngameScript
         const string commandPattern = @"\[(?<command>.*?)\]\r?\n(?<body>[\s\S]*?)(?=\r?\n\[(.*?)\]|$)";
         // https://regex101.com/r/DEsq3A/2
         const string bodyPattern = @"(?:when\s+(?<when>.*?)\s+)?run\s+(?<run>.*?)\s+as\s+(?<var>@\w+|none);?";
+        // https://regex101.com/r/fu9UHl/6
+        const string ifPattern = @"(?:(?<clausule>if\s+|else\s?if\s+|else\s?)(?<condition>#\w+)?[\r\n]+(?<body>.*?)(?=[\r\n]+(?<close>if|else if|else|end)))";
         const string dependencesPattern = @"@\w+";
 
         static readonly System.Text.RegularExpressions.Regex commandRegex
             = new System.Text.RegularExpressions.Regex(commandPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
         static readonly System.Text.RegularExpressions.Regex bodyRegex
             = new System.Text.RegularExpressions.Regex(bodyPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
+        static readonly System.Text.RegularExpressions.Regex ifRegex
+            = new System.Text.RegularExpressions.Regex(ifPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
         static readonly System.Text.RegularExpressions.Regex dependencesRegex
             = new System.Text.RegularExpressions.Regex(dependencesPattern);
 
 
-        public static IDictionary<string, InstructionCommand> Parse(string text)
+        public static IDictionary<string, ICommandInstruction> Parse(string text)
         {
-            var result = new Dictionary<string, InstructionCommand>();
+            var result = new Dictionary<string, ICommandInstruction>(StringComparer.OrdinalIgnoreCase);
             var commandMatches = commandRegex.Matches(text);
 
+            // Create commands.
             foreach (System.Text.RegularExpressions.Match commandMatch in commandMatches)
             {
-                var commandName = commandMatch.Groups["command"].Value.Trim();
-                var bodyGroup = commandMatch.Groups["body"];
-                var bodyContent = bodyGroup.Value.Trim();
-                var instructionBlocks = new Dictionary<string, InstructionBlock>(StringComparer.OrdinalIgnoreCase);
-                var bodyMatches = bodyRegex.Matches(bodyContent);
+                ICommandInstruction instructionCommand;
+
+                instructionCommand = CreateCommand(commandMatch, text);
+                if (instructionCommand == null)
+                {
+                    instructionCommand = CreateConditionCommand(commandMatch);
+                }
+                if (instructionCommand == null)
+                {
+                    throw new FormatException($"Unknown command body format.");
+                }
+                result.Add(instructionCommand.CommandName, instructionCommand);
+            }
+            ValidateCommandDependences(result);
+            return result;
+        }
+
+        private static InstructionCommand CreateCommand(System.Text.RegularExpressions.Match commandMatch, string text)
+        {
+            InstructionCommand result = null;
+            var instructionBlocks = new Dictionary<string, InstructionBlock>(StringComparer.OrdinalIgnoreCase);
+            var commandName = commandMatch.Groups["command"].Value.Trim();
+            var bodyGroup = commandMatch.Groups["body"];
+            var bodyContent = bodyGroup.Value.Trim();
+
+            var bodyMatches = bodyRegex.Matches(bodyContent);
+
+            if (bodyMatches.OfType<System.Text.RegularExpressions.Match>().Any())
+            {
                 var previousIndex = 0;
                 var lineCount = 1;
 
@@ -84,7 +113,7 @@ namespace IngameScript
                             {
                                 var lineItems = line.Trim().Split(new[] { "->" }, StringSplitOptions.RemoveEmptyEntries);
                                 string blockName = null, actionName = null;
-                                bool isValid;
+                                bool ignore, isValid;
 
                                 if (lineItems.Length > 0)
                                 {
@@ -95,11 +124,23 @@ namespace IngameScript
                                     actionName = lineItems[1].Trim();
                                 }
                                 isValid = lineItems.Length == 2;
+
+                                var ignoreIndex = actionName.IndexOf("/NoCheck", StringComparison.OrdinalIgnoreCase);
+                                if (ignoreIndex > -1)
+                                {
+                                    ignore = true;
+                                    actionName = actionName.Substring(0, ignoreIndex).TrimEnd();
+                                }
+                                else
+                                {
+                                    ignore = false;
+                                }
                                 return new
                                 {
                                     Line = index + 1,
                                     BlockName = blockName,
                                     ActionName = actionName,
+                                    Ignore = ignore,
                                     IsValid = isValid
                                 };
                             })
@@ -125,6 +166,7 @@ namespace IngameScript
                                 {
                                     BlockName = x.BlockName,
                                     ActionName = x.ActionName,
+                                    Ignore = x.Ignore,
                                     IsValid = x.IsValid
                                 })
                             });
@@ -141,11 +183,109 @@ namespace IngameScript
                 }
 
                 // Insert command.
-                result.Add(commandName, new InstructionCommand
+                result = new InstructionCommand
                 {
                     CommandName = commandName,
                     Body = instructionBlocks.Values
-                });
+                };
+            }
+            return result;
+        }
+
+        private static ConditionCommandInstruction CreateConditionCommand(System.Text.RegularExpressions.Match commandMatch)
+        {
+            ConditionCommandInstruction result = null;
+            var instructionBlocks = new List<ConditionBlockInstruction>();
+            var commandName = commandMatch.Groups["command"].Value.Trim();
+            var bodyGroup = commandMatch.Groups["body"];
+            var bodyContent = bodyGroup.Value.Trim();
+            var bodyMatches = ifRegex.Matches(bodyContent);
+
+            if (bodyMatches.OfType<System.Text.RegularExpressions.Match>().Any())
+            {
+                bool ifCondition = false, elseCondition = false;
+
+                // Comprobar si se encontró una coincidencia
+                foreach (System.Text.RegularExpressions.Match match in bodyMatches)
+                {
+                    var clausule = match.Groups["clausule"].Value.Trim();
+                    var close = match.Groups["close"].Value.Trim();
+                    var condition = match.Groups["condition"].Value?.Trim();
+                    var body = match.Groups["body"].Value.Trim();
+
+                    if (clausule.Equals("if", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!ifCondition)
+                        {
+                            ifCondition = true;
+                        }
+                        else
+                        {
+                            throw new Exception($"Syntact incorrect near '{clausule}'.");
+                        }
+                    }
+                    if (!ifCondition)
+                    {
+                        throw new Exception($"Syntact incorrect near '{clausule}': 'if' condition not found.");
+                    }
+                    else if (clausule.Equals("else", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!elseCondition) // Else debe ser la última condición.
+                        {
+                            if (close.Equals("end", StringComparison.OrdinalIgnoreCase))
+                            {
+                                elseCondition = true;
+                            }
+                            else
+                            {
+                                throw new Exception($"Syntact incorrect near '{clausule}': 'end' clausule not found.");
+                            }
+                        }
+                        else
+                        {
+                            throw new Exception($"Syntact incorrect near '{clausule}': there are already other 'else' clausule.");
+                        }
+                    }
+                    else if (!condition.StartsWith("#"))
+                    {
+                        throw new Exception($"'{condition}' is not a valid command name becaue it does not start with '#' character.");
+                    }
+                    else
+                    {
+                        condition = condition.Substring(1);
+                    }
+
+                    instructionBlocks.Add(new ConditionBlockInstruction
+                    {
+                        When = condition,
+                        Then = body
+                                .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(line => line.Trim().Split(new[] { "//" }, StringSplitOptions.RemoveEmptyEntries).First().Trim())
+                                .Where(line =>
+                                {
+                                    if (string.IsNullOrWhiteSpace(line) || line.StartsWith("//"))
+                                    {
+                                        return false;
+                                    }
+                                    else if (line.StartsWith("#"))
+                                    {
+                                        return true;
+                                    }
+                                    else
+                                    {
+                                        throw new Exception($"'{condition}' is not a valid command name becaue it does not start with '#' character.");
+                                    }
+                                }) // Ignore empty lines and comments.
+                                .Select(value => value.Substring(1))
+                    });
+                }
+
+                // Insert command.
+                result = new ConditionCommandInstruction
+                {
+                    CommandName = commandName,
+                    Body = instructionBlocks
+                };
             }
             return result;
         }
@@ -231,7 +371,6 @@ namespace IngameScript
             return i;
         }
 
-
         /// <summary>
         /// Checks if dependences exists and if there are cyclical references.
         /// </summary>
@@ -264,6 +403,52 @@ namespace IngameScript
                     else
                     {
                         throw new NullReferenceException($"Unknown dependence '{dependence}' found in 'when' clausule.");
+                    }
+                }
+            }
+        }
+
+        private static void ValidateCommandDependences(IDictionary<string, ICommandInstruction> result)
+        {
+            foreach (var instructionCommand in result.Values.OfType<ConditionCommandInstruction>())
+            {
+                foreach (var conditions in instructionCommand.Body)
+                {
+                    if (!string.IsNullOrEmpty(conditions.When))
+                    {
+                        ICommandInstruction command;
+                        string whenName = conditions.When;
+
+                        if (whenName.Equals(instructionCommand.CommandName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            throw new ArgumentException($"A command cannot call itself ({whenName}).");
+                        }
+                        if (!result.TryGetValue(whenName, out command))
+                        {
+                            throw new NullReferenceException($"Command with name '{whenName}' not found.");
+                        }
+                        else if (!(command is InstructionCommand))
+                        {
+                            throw new ArgumentException($"Conditional commands not allowed '({whenName})' in conditional commands.");
+                        }
+                    }
+                    foreach (var then in conditions.Then)
+                    {
+                        ICommandInstruction command;
+                        string thenName = then;
+
+                        if (thenName.Equals(instructionCommand.CommandName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            throw new ArgumentException($"A command cannot call itself ({thenName}).");
+                        }
+                        else if (!result.TryGetValue(thenName, out command))
+                        {
+                            throw new NullReferenceException($"Command with name '{thenName}' not found.");
+                        }
+                        else if (!(command is InstructionCommand))
+                        {
+                            throw new ArgumentException($"Conditional commands not allowed '({thenName})' in conditional commands.");
+                        }
                     }
                 }
             }

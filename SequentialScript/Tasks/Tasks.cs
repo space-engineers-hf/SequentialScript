@@ -69,7 +69,7 @@ namespace IngameScript
                     {
                         foreach (var block in blocks)
                         {
-                            actions.Add(new TaskAction { Block = block, ActionProfile = ActionProfiles.GetActionProfile(block, instruction.ActionName) });
+                            actions.Add(new TaskAction { Block = block, ActionProfile = ActionProfiles.GetActionProfile(block, instruction.ActionName), Ignore = instruction.Ignore });
                         }
                     }
                     else
@@ -81,7 +81,7 @@ namespace IngameScript
                 {
                     Alias = instructionBlock.Alias,
                     Actions = actions,
-                    PreviousTasks = result.Join(instructionBlock.PreviousAlias, x => x.Alias, y => y, (x, y) => x)
+                    PreviousTasks = result.Join(instructionBlock.PreviousAlias, x => x.Alias, y => y, (x, y) => x),
                 });
             }
             // Calculate dependences.
@@ -92,7 +92,7 @@ namespace IngameScript
             return result;
         }
 
-        public static int Run(this IEnumerable<Task> tasks)
+        public static IEnumerable<Task> Run(this IEnumerable<Task> tasks)
         {
             foreach (var task in tasks)
             {
@@ -100,10 +100,13 @@ namespace IngameScript
 
                 if (status == TaskStatus.Completed && task.IsRunning)
                 {
+                    // Update task status.
                     task.IsRunning = false;
+                    task.IsDone = true;
                 }
-                if (status == TaskStatus.Pending)
+                else if (status == TaskStatus.Pending)
                 {
+                    // Search if this task can start.
                     var previousCompleted = task.PreviousTasks.All(previous => GetStatus(previous) == TaskStatus.Completed);
 
                     if (previousCompleted)
@@ -116,7 +119,7 @@ namespace IngameScript
                     }
                 }
             }
-            return tasks.Count(task => task.IsRunning);
+            return tasks.Where(task=> task.IsRunning == true);
         }
 
         /// <summary>
@@ -146,9 +149,8 @@ namespace IngameScript
         private static TaskStatus GetStatus(Task task)
         {
             TaskStatus status;
-            var completed = task.Actions.All(action => action.ActionProfile.IsCompleteCallback(action.Block));
 
-            if (completed)
+            if (task.IsDone || task.Actions.All(action => action.Ignore || action.ActionProfile.IsCompleteCallback(action.Block)))
             {
                 status = TaskStatus.Completed;
             }

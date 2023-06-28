@@ -20,12 +20,11 @@ using VRageMath;
 
 namespace IngameScript
 {
-    class TaskAction
+    class ConditionCommandInstruction : ICommandInstruction
     {
 
-        public IMyTerminalBlock Block { get; set; }
-        public IActionProfile ActionProfile { get; set; }
-        public bool Ignore { get; set; }
+        public string CommandName { get; set; }
+        public IEnumerable<ConditionBlockInstruction> Body { get; set; }
 
     }
 }

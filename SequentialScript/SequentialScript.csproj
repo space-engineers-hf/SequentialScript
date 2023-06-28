@@ -58,7 +58,10 @@
     <Compile Include="ActionProfiles\IActionProfile.cs" />
     <Compile Include="Instructions\InstructionBlock.cs" />
     <Compile Include="Instructions\Instruction.cs" />
+    <Compile Include="Instructions\ConditionBlockInstruction.cs" />
     <Compile Include="Instructions\InstructionCommand.cs" />
+    <Compile Include="Instructions\ICommandInstruction.cs" />
+    <Compile Include="Instructions\ConditionCommandInstruction.cs" />
     <Compile Include="Instructions\InstructionParser.cs" />
     <Compile Include="MDK\Bootstrapper.cs" />
     <AdditionalFiles Include="MDK\MDK.options.props">

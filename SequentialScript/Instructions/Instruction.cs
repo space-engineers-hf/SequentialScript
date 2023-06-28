@@ -38,5 +38,10 @@ namespace IngameScript
         /// </summary>
         public bool IsValid { get; set; }
 
+        /// <summary>
+        /// Gets or sets if must validate if this <see cref="Instruction"/> is done.
+        /// </summary>
+        public bool Ignore { get; set; }
+
     }
 }

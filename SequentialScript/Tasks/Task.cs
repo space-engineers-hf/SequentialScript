@@ -27,8 +27,8 @@ namespace IngameScript
         public IEnumerable<Task> PreviousTasks { get; set; }
         public IEnumerable<TaskAction> Actions { get; set; }
 
-
         public bool IsRunning { get; set; }
+        public bool IsDone { get; set; }
 
     }
 }

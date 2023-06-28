@@ -45,30 +45,95 @@ namespace IngameScript
 
             if (CommonHelper.IsCycle(updateSource))
             {
-                int tasksRunning;
+                IEnumerable<Task> tasksRunning;
+                var debug = new StringBuilder();
 
                 tasksRunning = _tasks.Run();
-                Echo($"Running {tasksRunning}.");
-                if (tasksRunning == 0)
+                if (tasksRunning.Any())
                 {
+                    // Debug running tasks and its pending instructions.
+                    debug.AppendLine("Running:");
+                    foreach (var task in tasksRunning)
+                    {
+                        debug.AppendLine($" -> {task.Alias}");
+                        foreach (var action in task.Actions)
+                        {
+                            debug.AppendLine($"  - {action.Block.DisplayNameText}.{action.ActionProfile.ActionName} = {action.ActionProfile.IsCompleteCallback(action.Block)}");
+                        }
+                    }
+                    Echo($"{debug}");
+                }
+                else
+                {
+                    // Finish cycle.
                     Runtime.UpdateFrequency = UpdateFrequency.None;
+                    Echo("Done.");
                 }
             }
             else
             {
-                IDictionary<string, InstructionCommand> commands;
-                InstructionCommand command;
+                IDictionary<string, ICommandInstruction> commands;
+                ICommandInstruction command;
 
                 try
                 {
                     commands = InstructionParser.Parse(Me.CustomData);
 
-                    if (commands.TryGetValue(argument, out command))
+                    if (string.IsNullOrWhiteSpace(argument))
+                    {
+                        // TODO: Compilar todo.
+                    }
+                    else if (commands.TryGetValue(argument, out command))
                     {
                         _tasks?.Cancel();
-                        _tasks = Tasks.CreateTasks(command.Body, GridTerminalSystem.GetBlocks(), GridTerminalSystem.GetBlockGroups());
-                        Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                        Echo("Started");
+                        if (command is InstructionCommand)
+                        {
+                            _tasks = Tasks.CreateTasks(((InstructionCommand)command).Body, GridTerminalSystem.GetBlocks(), GridTerminalSystem.GetBlockGroups());
+                            Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                            Echo("Started.");
+                        }
+                        else if (command is ConditionCommandInstruction)
+                        {
+                            var blocks = GridTerminalSystem.GetBlocks();
+                            var groups = GridTerminalSystem.GetBlockGroups();
+                            var conditionCommand = (ConditionCommandInstruction)command;
+                            var conditionBlocks = conditionCommand.Body.GetEnumerator();
+                            bool positive = false;
+
+                            while (!positive && conditionBlocks.MoveNext())
+                            {
+                                var condition = conditionBlocks.Current;
+
+                                // Check positive condition.
+                                if (string.IsNullOrEmpty(condition.When))
+                                {
+                                    positive = true; // 'else' condition.
+                                }
+                                else
+                                {
+                                    InstructionCommand whenCommand;
+                                    IEnumerable<Task> whenTasks;
+
+                                    whenCommand = (InstructionCommand)commands[condition.When];
+                                    whenTasks = Tasks.CreateTasks(whenCommand.Body, blocks, groups);
+                                    if (Tasks.IsCompleted(whenTasks))
+                                    {
+                                        positive = true;
+                                    }
+                                }
+                                if (positive)
+                                {
+                                    InstructionCommand thenCommand;
+
+                                    // TODO: Multiple tasks.
+                                    thenCommand = (InstructionCommand)commands[condition.Then.Single()];
+                                    _tasks = Tasks.CreateTasks(thenCommand.Body, blocks, groups);
+                                    Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                                    Echo("Started.");
+                                }
+                            }
+
+                        }
                     }
                     else
                     {
