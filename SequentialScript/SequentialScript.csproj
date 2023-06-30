@@ -39,6 +39,8 @@
   <Import Project="MDK/MDK.paths.props" Condition="exists('MDK/MDK.paths.props')" />
   <ItemGroup>
     <Compile Include="ActionProfiles\ActionProfile.cs" />
+    <Compile Include="ActionProfiles\ActionProfileMotorStatorBack.cs" />
+    <Compile Include="ActionProfiles\ActionProfileMotorStatorForward.cs" />
     <Compile Include="ActionProfiles\ActionProfileSoundStop.cs" />
     <Compile Include="ActionProfiles\ActionProfileSoundPlay.cs" />
     <Compile Include="ActionProfiles\ActionProfileTimerTrigger.cs" />

@@ -33,6 +33,7 @@ namespace IngameScript
             new ActionProfileAirVentPressurize(), new ActionProfileAirVentDepressurize(),
             new ActionProfileTimerStart(), new ActionProfileTimerStop(), new ActionProfileTimerTrigger(),
             new ActionProfileSoundPlay(), new ActionProfileSoundStop(),
+            new ActionProfileMotorStatorForward(), new ActionProfileMotorStatorBack(),
         };
 
         public static IActionProfile GetActionProfile(IMyTerminalBlock block, string action)
