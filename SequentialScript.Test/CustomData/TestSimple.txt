@@ -1,0 +1,4 @@
+﻿[OPEN]
+run
+ Door -> Open
+as @open_door

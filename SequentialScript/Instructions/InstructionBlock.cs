@@ -20,7 +20,7 @@ using VRageMath;
 
 namespace IngameScript
 {
-    class InstructionBlock
+    public class InstructionBlock
     {
 
         /// <summary>

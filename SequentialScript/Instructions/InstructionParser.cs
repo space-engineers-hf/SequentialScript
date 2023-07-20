@@ -23,16 +23,15 @@ using VRageMath;
 
 namespace IngameScript
 {
-    class InstructionParser
+    public class InstructionParser
     {
 
-        // https://regex101.com/r/2Vysiy/4
-        const string commandPattern = @"\[(?<command>.*?)\]\r?\n(?<body>[\s\S]*?)(?=\r?\n\[(.*?)\]|$)";
+        // https://regex101.com/r/2Vysiy/5
+        const string commandPattern = @"\[(?<command>.*?)\](?:\r?\n)+(?<body>[\s\S]*?)(?=\r?\n\[(.*?)\]|$)";
         // https://regex101.com/r/DEsq3A/2
         const string bodyPattern = @"(?:when\s+(?<when>.*?)\s+)?run\s+(?<run>.*?)\s+as\s+(?<var>@\w+|none);?";
         // https://regex101.com/r/fu9UHl/6
         const string ifPattern = @"(?:(?<clausule>if\s+|else\s?if\s+|else\s?)(?<condition>#\w+)?[\r\n]+(?<body>.*?)(?=[\r\n]+(?<close>if|else if|else|end)))";
-        const string dependencesPattern = @"@\w+";
 
         static readonly System.Text.RegularExpressions.Regex commandRegex
             = new System.Text.RegularExpressions.Regex(commandPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
@@ -40,8 +39,6 @@ namespace IngameScript
             = new System.Text.RegularExpressions.Regex(bodyPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
         static readonly System.Text.RegularExpressions.Regex ifRegex
             = new System.Text.RegularExpressions.Regex(ifPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
-        static readonly System.Text.RegularExpressions.Regex dependencesRegex
-            = new System.Text.RegularExpressions.Regex(dependencesPattern);
 
 
         public static IDictionary<string, ICommandInstruction> Parse(string text)
@@ -88,7 +85,10 @@ namespace IngameScript
                 lineCount += GetLineCount(text, 0, bodyGroup.Index);
                 foreach (System.Text.RegularExpressions.Match bodyMatch in bodyMatches)
                 {
+                    int lineStart;
+
                     lineCount += CheckSyntax(bodyContent, previousIndex, bodyMatch.Index, lineCount);
+                    lineStart = lineCount;
                     lineCount += GetLineCount(bodyContent, bodyMatch.Index, bodyMatch.Length);
 
                     var whenGroup = bodyMatch.Groups["when"]?.Value;
@@ -111,7 +111,9 @@ namespace IngameScript
                             .Where(line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith("//")) // Ignore empty lines and comments.
                             .Select((line, index) =>
                             {
-                                var lineItems = line.Trim().Split(new[] { "->" }, StringSplitOptions.RemoveEmptyEntries);
+                                var lineComments = line.Split(new[] { "//" }, StringSplitOptions.None);
+                                var lineWithoutComments = lineComments.First();
+                                var lineItems = lineWithoutComments.Trim().Split(new[] { "->" }, StringSplitOptions.RemoveEmptyEntries);
                                 string blockName = null, actionName = null;
                                 bool ignore, isValid;
 
@@ -153,23 +155,39 @@ namespace IngameScript
                         else
                         {
                             var previousActionsMatch =
-                                dependencesRegex
-                                    .Matches(whenGroup)
-                                    .OfType<System.Text.RegularExpressions.Match>()
-                                    .Select(x => x.Value.Trim());
+                                whenGroup
+                                    .Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries)
+                                    .Select(x => x.Trim())
+                                    .GroupJoin(
+                                        instructionBlocks.Keys,
+                                        x => x,
+                                        y => $"@{y}",
+                                        (x, y) => new { Alias = x, Exists = y.Any(), IsValid = x.StartsWith("@") || x.Equals("none", StringComparison.OrdinalIgnoreCase) }
+                                    );
 
-                            instructionBlocks.Add(alias, new InstructionBlock
+                            if (previousActionsMatch.Any(x => !x.IsValid))
                             {
-                                Alias = alias,
-                                PreviousAlias = previousActionsMatch,
-                                Instructions = actions.Select(x => new Instruction
+                                throw new FormatException(
+                                    $"Invalid syntax near to 'when' clausule in '{alias}' (line {lineStart}): " +
+                                    $"{string.Join(",", previousActionsMatch.Where(x => !x.IsValid).Select(x => $"{x.Alias}"))} is not valid.\n" +
+                                    $"Maybe you forgot the '@'."
+                                );
+                            }
+                            else
+                            {
+                                instructionBlocks.Add(alias, new InstructionBlock
                                 {
-                                    BlockName = x.BlockName,
-                                    ActionName = x.ActionName,
-                                    Ignore = x.Ignore,
-                                    IsValid = x.IsValid
-                                })
-                            });
+                                    Alias = alias,
+                                    PreviousAlias = previousActionsMatch.Select(x => x.Alias),
+                                    Instructions = actions.Select(x => new Instruction
+                                    {
+                                        BlockName = x.BlockName,
+                                        ActionName = x.ActionName,
+                                        Ignore = x.Ignore,
+                                        IsValid = x.IsValid
+                                    })
+                                });
+                            }
                         }
                     }
                     previousIndex = bodyMatch.Index + bodyMatch.Length;
@@ -377,28 +395,32 @@ namespace IngameScript
         /// <param name="collection">Full list of <see cref="InstructionBlock"/>.</param>
         /// <param name="item">The <see cref="InstructionBlock"/> to validate.</param>
         /// <param name="path">This is a list for check cyclical references during recursive calls.</param>
-        /// <exception cref="Exception">There are cyclical references.</exception>
+        /// <exception cref="StackOverflowException">There are cyclical references.</exception>
         /// <exception cref="NullReferenceException">The <see cref="InstructionBlock.PreviousAlias"/> contains some <see cref="InstructionBlock.Alias"/> that has not been declared.</exception>
-        private static void CheckDependences(IDictionary<string, InstructionBlock> collection, InstructionBlock item, IList<string> path = null)
+        private static void CheckDependences(IDictionary<string, InstructionBlock> collection, InstructionBlock item, IEnumerable<string> path = null)
         {
+            string stringPath;
+
             if (path == null)
             {
                 path = new List<string>();
             }
+            stringPath = string.Join("/", path.Append(item.Alias).Reverse());
             if (path.Contains(item.Alias, StringComparer.OrdinalIgnoreCase))
             {
-                throw new Exception($"'{item.Alias}' calls itself in the following path: '{string.Join("/", path)}/{item.Alias}'. Please check 'when' clausules."); // TODO: Create StackOverflowException
+                throw new StackOverflowException($"'{item.Alias}' calls itself in the following path: '{stringPath}'. Please check 'when' clausules.");
             }
             else
             {
-                path.Insert(0, item.Alias);
+                var newpath = path.Append(item.Alias);
+
                 foreach (var dependence in item.PreviousAlias)
                 {
                     InstructionBlock previous;
 
                     if (collection.TryGetValue(dependence, out previous))
                     {
-                        CheckDependences(collection, previous, path);
+                        CheckDependences(collection, previous, newpath);
                     }
                     else
                     {

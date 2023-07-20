@@ -20,7 +20,7 @@ using VRageMath;
 
 namespace IngameScript
 {
-    interface ICommandInstruction
+    public interface ICommandInstruction
     {
 
         string CommandName { get; set; }
