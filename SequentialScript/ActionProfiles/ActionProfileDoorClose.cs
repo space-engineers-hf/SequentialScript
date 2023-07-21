@@ -23,12 +23,12 @@ namespace IngameScript
     sealed class ActionProfileDoorClose : ActionProfile<IMyDoor>
     {
 
-        public override string ActionName => "Close";
+        public override IEnumerable<string> ActionNames => new string[] { "Close" };
 
-        public override Action<IMyDoor> OnActionCallback => 
+        public override Action<IMyDoor> OnActionCallback =>
             block => block.CloseDoor();
 
-        public override Func<IMyDoor, bool> IsCompleteCallback => 
+        public override Func<IMyDoor, bool> IsCompleteCallback =>
             block => block.Status == DoorStatus.Closed;
     }
 }

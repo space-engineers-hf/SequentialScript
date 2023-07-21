@@ -23,7 +23,7 @@ namespace IngameScript
     sealed class ActionProfileSoundStop : ActionProfile<IMySoundBlock>
     {
 
-        public override string ActionName => "Stop";
+        public override IEnumerable<string> ActionNames => new[] { "Stop" };
 
         public override Action<IMySoundBlock> OnActionCallback => 
             block => block.Stop();

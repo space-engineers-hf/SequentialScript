@@ -23,7 +23,7 @@ namespace IngameScript
     sealed class ActionProfileTimerStart : ActionProfile<IMyTimerBlock>
     {
 
-        public override string ActionName => "Start";
+        public override IEnumerable<string> ActionNames => new[] { "Start" };
 
         public override Action<IMyTimerBlock> OnActionCallback => 
             block => block.StartCountdown();

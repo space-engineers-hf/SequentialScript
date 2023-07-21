@@ -23,7 +23,7 @@ namespace IngameScript
     sealed class ActionProfilePistonBaseExtend : ActionProfile<IMyPistonBase>
     {
 
-        public override string ActionName => "Extend";
+        public override IEnumerable<string> ActionNames => new[] { "Extend" };
 
         public override Action<IMyPistonBase> OnActionCallback => 
             block => block.Extend();

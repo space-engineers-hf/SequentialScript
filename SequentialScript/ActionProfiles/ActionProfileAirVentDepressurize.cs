@@ -23,7 +23,7 @@ namespace IngameScript
     sealed class ActionProfileAirVentDepressurize : ActionProfile<IMyAirVent>
     {
 
-        public override string ActionName => "Depressurize";
+        public override IEnumerable<string> ActionNames => new[] { "Depressurize" };
 
         public override Action<IMyAirVent> OnActionCallback => 
             block => block.Depressurize = true;

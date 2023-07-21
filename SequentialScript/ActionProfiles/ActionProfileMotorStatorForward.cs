@@ -23,7 +23,7 @@ namespace IngameScript
     sealed class ActionProfileMotorStatorForward : ActionProfile<IMyMotorStator>
     {
 
-        public override string ActionName => "Forward";
+        public override IEnumerable<string> ActionNames => new[] { "Forward" };
 
         public override Action<IMyMotorStator> OnActionCallback
             => block => block.TargetVelocityRPM = Math.Abs(block.TargetVelocityRPM);

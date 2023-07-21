@@ -23,7 +23,7 @@ namespace IngameScript
     sealed class ActionProfileTimerTrigger : ActionProfile<IMyTimerBlock>
     {
 
-        public override string ActionName => "Trigger";
+        public override IEnumerable<string> ActionNames => new[] { "Trigger" };
 
         public override Action<IMyTimerBlock> OnActionCallback => 
             block => block.Trigger();

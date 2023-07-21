@@ -23,7 +23,7 @@ namespace IngameScript
     abstract class ActionProfile<TMyTerminalBlock> : IActionProfile where TMyTerminalBlock : class, IMyTerminalBlock
     {
 
-        public abstract string ActionName { get; }
+        public abstract IEnumerable<string> ActionNames { get; }
         public abstract Action<TMyTerminalBlock> OnActionCallback { get; }
         public abstract Func<TMyTerminalBlock, bool> IsCompleteCallback { get; }
 

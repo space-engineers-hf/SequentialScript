@@ -23,7 +23,7 @@ namespace IngameScript
     interface IActionProfile
     {
 
-        string ActionName { get; }
+        IEnumerable<string> ActionNames { get; }
         Action<IMyTerminalBlock> OnActionCallback { get; }
         Func<IMyTerminalBlock, bool> IsCompleteCallback { get; }
         bool IsAssignableFrom(IMyTerminalBlock block);

@@ -23,7 +23,7 @@ namespace IngameScript
     sealed class ActionProfileDoorOpen : ActionProfile<IMyDoor>
     {
 
-        public override string ActionName => "Open";
+        public override IEnumerable<string> ActionNames => new[] { "Open" };
 
         public override Action<IMyDoor> OnActionCallback =>
             block => block.OpenDoor();

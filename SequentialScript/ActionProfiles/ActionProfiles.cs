@@ -38,7 +38,7 @@ namespace IngameScript
 
         public static IActionProfile GetActionProfile(IMyTerminalBlock block, string action)
         {
-            IActionProfile actionProfile = _profiles.LastOrDefault(profile => profile.IsAssignableFrom(block) && profile.ActionName.Equals(action, StringComparison.OrdinalIgnoreCase));
+            IActionProfile actionProfile = _profiles.LastOrDefault(profile => profile.IsAssignableFrom(block) && profile.ActionNames.Contains(action, StringComparer.OrdinalIgnoreCase));
 
             if (actionProfile == null)
             {

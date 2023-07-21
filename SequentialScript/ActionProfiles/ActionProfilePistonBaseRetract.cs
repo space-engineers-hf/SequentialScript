@@ -23,7 +23,7 @@ namespace IngameScript
     sealed class ActionProfilePistonBaseRetract : ActionProfile<IMyPistonBase>
     {
 
-        public override string ActionName => "Retract";
+        public override IEnumerable<string> ActionNames => new[] { "Retract" };
 
         public override Action<IMyPistonBase> OnActionCallback => 
             block => block.Retract();

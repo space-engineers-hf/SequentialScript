@@ -23,7 +23,7 @@ namespace IngameScript
     sealed class ActionProfileTimerStop : ActionProfile<IMyTimerBlock>
     {
 
-        public override string ActionName => "Stop";
+        public override IEnumerable<string> ActionNames => new[] { "Stop" };
 
         public override Action<IMyTimerBlock> OnActionCallback => 
             block => block.StopCountdown();

@@ -23,7 +23,7 @@ namespace IngameScript
     sealed class ActionProfileMergeBlockDisable : ActionProfile<IMyShipMergeBlock>
     {
 
-        public override string ActionName => "Disable";
+        public override IEnumerable<string> ActionNames => new[] { "Disable", "Off", "Unlock" };
 
         public override Action<IMyShipMergeBlock> OnActionCallback => 
             block => block.Enabled = false;

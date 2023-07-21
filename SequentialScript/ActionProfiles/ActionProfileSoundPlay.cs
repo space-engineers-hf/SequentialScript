@@ -23,7 +23,7 @@ namespace IngameScript
     sealed class ActionProfileSoundPlay : ActionProfile<IMySoundBlock>
     {
 
-        public override string ActionName => "Play";
+        public override IEnumerable<string> ActionNames => new[] { "Play" };
 
         public override Action<IMySoundBlock> OnActionCallback => 
             block => block.Play();

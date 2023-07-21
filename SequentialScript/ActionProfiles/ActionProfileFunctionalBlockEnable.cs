@@ -23,7 +23,7 @@ namespace IngameScript
     sealed class ActionProfileFunctionalBlockEnable : ActionProfile<IMyFunctionalBlock>
     {
 
-        public override string ActionName => "Enable";
+        public override IEnumerable<string> ActionNames => new[] { "Enable", "On" };
 
         public override Action<IMyFunctionalBlock> OnActionCallback =>
             block => block.Enabled = true;
