@@ -28,7 +28,7 @@ namespace IngameScript
         public override Action<IMyPistonBase, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.Retract();
 
-        public override Func<IMyPistonBase, bool> IsCompleteCallback => 
-            block => block.Status == PistonStatus.Retracted;
+        public override Func<IMyPistonBase, IDictionary<string, string>, bool> IsCompleteCallback =>
+            (block, args) => block.Status == PistonStatus.Retracted;
     }
 }

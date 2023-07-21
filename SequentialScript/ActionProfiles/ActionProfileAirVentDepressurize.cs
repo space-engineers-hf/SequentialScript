@@ -28,8 +28,8 @@ namespace IngameScript
         public override Action<IMyAirVent, IDictionary<string, string>> OnActionCallback => 
             (block, args) => block.Depressurize = true;
 
-        public override Func<IMyAirVent, bool> IsCompleteCallback => 
-            block => block.GetOxygenLevel() == 0;
+        public override Func<IMyAirVent, IDictionary<string, string>, bool> IsCompleteCallback =>
+            (block, args) => block.GetOxygenLevel() == 0;
 
     }
 }

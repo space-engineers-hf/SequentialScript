@@ -150,7 +150,7 @@ namespace IngameScript
         {
             TaskStatus status;
 
-            if (task.IsDone || task.Actions.All(action => action.Ignore || action.ActionProfile.IsCompleteCallback(action.Block)))
+            if (task.IsDone || task.Actions.All(action => action.Ignore || action.ActionProfile.IsCompleteCallback(action.Block, action.Arguments)))
             {
                 status = TaskStatus.Completed;
             }

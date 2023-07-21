@@ -28,8 +28,8 @@ namespace IngameScript
         public override Action<IMySoundBlock, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.Play();
 
-        public override Func<IMySoundBlock, bool> IsCompleteCallback => 
-            block => true;
+        public override Func<IMySoundBlock, IDictionary<string, string>, bool> IsCompleteCallback =>
+            (block, args) => true;
 
     }
 }

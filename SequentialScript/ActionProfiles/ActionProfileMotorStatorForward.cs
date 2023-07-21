@@ -28,8 +28,8 @@ namespace IngameScript
         public override Action<IMyMotorStator, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.TargetVelocityRPM = Math.Abs(block.TargetVelocityRPM);
 
-        public override Func<IMyMotorStator, bool> IsCompleteCallback
-            => block => block.Angle >= block.UpperLimitRad;
+        public override Func<IMyMotorStator, IDictionary<string, string>, bool> IsCompleteCallback =>
+            (block, args) => block.Angle >= block.UpperLimitRad;
 
     }
 }

@@ -28,8 +28,8 @@ namespace IngameScript
         public override Action<IMyDoor, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.OpenDoor();
 
-        public override Func<IMyDoor, bool> IsCompleteCallback =>
-            block => block.Status == DoorStatus.Open;
+        public override Func<IMyDoor, IDictionary<string, string>, bool> IsCompleteCallback =>
+            (block, args) => block.Status == DoorStatus.Open;
 
     }
 }

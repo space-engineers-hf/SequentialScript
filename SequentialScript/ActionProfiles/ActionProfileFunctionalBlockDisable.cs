@@ -28,8 +28,8 @@ namespace IngameScript
         public override Action<IMyFunctionalBlock, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.Enabled = false;
 
-        public override Func<IMyFunctionalBlock, bool> IsCompleteCallback =>
-            block => !block.Enabled;
+        public override Func<IMyFunctionalBlock, IDictionary<string, string>, bool> IsCompleteCallback =>
+            (block, args) => !block.Enabled;
      
     }
 }

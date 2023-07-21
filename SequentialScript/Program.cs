@@ -58,7 +58,7 @@ namespace IngameScript
                         debug.AppendLine($" -> {task.Alias}");
                         foreach (var action in task.Actions)
                         {
-                            debug.AppendLine($"  - {action.Block.DisplayNameText}.{action.ActionProfile.ActionNames.First()} = {action.ActionProfile.IsCompleteCallback(action.Block)}");
+                            debug.AppendLine($"  - {action.Block.DisplayNameText}.{action.ActionProfile.ActionNames.First()} = {action.ActionProfile.IsCompleteCallback(action.Block, action.Arguments)}");
                         }
                     }
                     Echo($"{debug}");

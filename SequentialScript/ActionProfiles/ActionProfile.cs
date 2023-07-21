@@ -25,14 +25,14 @@ namespace IngameScript
 
         public abstract IEnumerable<string> ActionNames { get; }
         public abstract Action<TMyTerminalBlock, IDictionary<string, string>> OnActionCallback { get; }
-        public abstract Func<TMyTerminalBlock, bool> IsCompleteCallback { get; }
+        public abstract Func<TMyTerminalBlock, IDictionary<string, string>, bool> IsCompleteCallback { get; }
 
 
         Action<IMyTerminalBlock, IDictionary<string, string>> IActionProfile.OnActionCallback =>
             (block, args) => OnActionCallback(GetMyTerminalBlock(block), args);
 
-        Func<IMyTerminalBlock, bool> IActionProfile.IsCompleteCallback =>
-            block => IsCompleteCallback(GetMyTerminalBlock(block));
+        Func<IMyTerminalBlock, IDictionary<string, string>, bool> IActionProfile.IsCompleteCallback =>
+            (block, args) => IsCompleteCallback(GetMyTerminalBlock(block), args);
 
         bool IActionProfile.IsAssignableFrom(IMyTerminalBlock block)
             => (block is TMyTerminalBlock);
