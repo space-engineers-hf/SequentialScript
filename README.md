@@ -1,5 +1,26 @@
 # SequentialScript
 
+Example:
+
+```
+when @previous_action1, @previous_action2
+run
+ Block name 1 -> Action /NoCheck /Argument1 /Argument2:MyValue /Argument3:"My value with spaces"
+ Block name 2 -> Action /NoCheck /Argument1 /Argument2:MyValue /Argument3:"My value with spaces"
+as @action_block
+```
+
+Syntax elements:
+
+- when: optional clausule, previous action blocks whose actions must have all met their finish condition. If this clausule is not added to the action block, it stats at the begining.
+- run [content] as [@alias|none]
+    - content: list of actions of the action block.
+    - @alias: name for the action block. This name is used for others actions blocks in their "when" clausule.
+
+
+
+## Action list
+
 | Block type            | Action name            | Description                                     | Finish condition              | Arguments |
 | --------------------- | ---------------------- | ----------------------------------------------- | ----------------------------- | --------- |
 | Any functional block  | Enable / On            | Switches on the block                           | Block enabled                 |           |
