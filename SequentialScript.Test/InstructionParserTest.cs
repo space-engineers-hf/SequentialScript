@@ -26,6 +26,7 @@ namespace SequentialScript.Test
                             Instructions = new []{ new IngameScript.Instruction {
                                 BlockName = "Door",
                                 ActionName = "Open",
+                                Arguments = new Dictionary<string, string> { },
                                 IsValid = true,
                                 Ignore = false
                             }},
@@ -35,7 +36,7 @@ namespace SequentialScript.Test
             };
 
             commands = IngameScript.InstructionParser.Parse(CustomData.Resources.TestSimple);
-            AssertInstrucion.AreEqual(expected, commands);
+            InstrucionAssert.AreEqual(expected, commands);
         }
 
         [TestMethod]
@@ -53,6 +54,7 @@ namespace SequentialScript.Test
                             Instructions = new []{ new IngameScript.Instruction {
                                 BlockName = "Door",
                                 ActionName = "Open",
+                                Arguments = new Dictionary<string, string> { },
                                 IsValid = true,
                                 Ignore = false
                             }},
@@ -62,7 +64,7 @@ namespace SequentialScript.Test
             };
 
             commands = IngameScript.InstructionParser.Parse(CustomData.Resources.TestComments);
-            AssertInstrucion.AreEqual(expected, commands);
+            InstrucionAssert.AreEqual(expected, commands);
         }
 
         [TestMethod]
@@ -80,6 +82,7 @@ namespace SequentialScript.Test
                             Instructions = new []{ new IngameScript.Instruction {
                                 BlockName = "Door Light",
                                 ActionName = "Enable",
+                                Arguments = new Dictionary<string, string> { },
                                 IsValid = true,
                                 Ignore = false
                             }},
@@ -90,6 +93,7 @@ namespace SequentialScript.Test
                             Instructions = new []{ new IngameScript.Instruction {
                                 BlockName = "Door",
                                 ActionName = "Open",
+                                Arguments = new Dictionary<string, string> { },
                                 IsValid = true,
                                 Ignore = false
                             }},
@@ -100,6 +104,7 @@ namespace SequentialScript.Test
                             Instructions = new []{ new IngameScript.Instruction {
                                 BlockName = "Door Light",
                                 ActionName = "Disable",
+                                Arguments = new Dictionary<string, string> { },
                                 IsValid = true,
                                 Ignore = false
                             }},
@@ -109,7 +114,7 @@ namespace SequentialScript.Test
             };
 
             commands = IngameScript.InstructionParser.Parse(CustomData.Resources.TestDependences);
-            AssertInstrucion.AreEqual(expected, commands);
+            InstrucionAssert.AreEqual(expected, commands);
         }
 
         [TestMethod]
@@ -119,6 +124,39 @@ namespace SequentialScript.Test
             {
                 IngameScript.InstructionParser.Parse(CustomData.Resources.TestDependences_Recursivity);
             });
+        }
+
+        [TestMethod]
+        public void TestArguments()
+        {
+            IDictionary<string, IngameScript.ICommandInstruction> commands;
+            var expected = new Dictionary<string, IngameScript.ICommandInstruction>()
+            {
+                { "OPEN", new IngameScript.InstructionCommand {
+                    CommandName = "OPEN",
+                    Body = new Dictionary<string, IngameScript.InstructionBlock> {
+                        { "@action", new IngameScript.InstructionBlock {
+                            Alias = "@action",
+                            PreviousAlias = new string[] { },
+                            Instructions = new []{ new IngameScript.Instruction {
+                                BlockName = "Block",
+                                ActionName = "Some Action",
+                                Arguments = new Dictionary<string, string> {
+                                    { "NoCheck", "" },
+                                    { "Key1", "Value" },
+                                    { "Key2", "Value with spaces" },
+                                    { "Key3", "Value with special characters :/" }
+                                },
+                                IsValid = true,
+                                Ignore = true
+                            }},
+                        } }
+                    }.Values
+                }}
+            };
+
+            commands = IngameScript.InstructionParser.Parse(CustomData.Resources.TestArguments);
+            InstrucionAssert.AreEqual(expected, commands);
         }
 
     }

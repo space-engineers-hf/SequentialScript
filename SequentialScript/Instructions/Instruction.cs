@@ -34,12 +34,17 @@ namespace IngameScript
         public string ActionName { get; set; }
 
         /// <summary>
+        /// Gets or sets the list of arguments for the instruction.
+        /// </summary>
+        public IDictionary<string, string> Arguments { get; set; }
+
+        /// <summary>
         /// Gets or sets if this <see cref="ActionGroup"/> was parsed successfully.
         /// </summary>
         public bool IsValid { get; set; }
 
         /// <summary>
-        /// Gets or sets if must validate if this <see cref="Instruction"/> is done.
+        /// Gets or sets if must validate if this <see cref="Instruction"/> is done (/NoCheck).
         /// </summary>
         public bool Ignore { get; set; }
 

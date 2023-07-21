@@ -25,6 +25,7 @@ namespace IngameScript
 
         public IMyTerminalBlock Block { get; set; }
         public IActionProfile ActionProfile { get; set; }
+        public IDictionary<string, string> Arguments { get; set; }
         public bool Ignore { get; set; }
 
     }

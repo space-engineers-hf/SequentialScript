@@ -62,6 +62,18 @@ namespace SequentialScript.Test.CustomData {
         
         /// <summary>
         ///   Looks up a localized string similar to [OPEN]
+        ///run
+        /// Door -&gt; Open /NoCheck /Key1:Value /Key2:&quot;Value with spaces&quot; /Key3:&quot;Value with special characters :/&quot;
+        ///as @open_door.
+        /// </summary>
+        internal static string TestArguments {
+            get {
+                return ResourceManager.GetString("TestArguments", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to [OPEN]
         ///
         ///// Comment over block
         ///run // Comment in block
@@ -80,17 +92,17 @@ namespace SequentialScript.Test.CustomData {
         /// <summary>
         ///   Looks up a localized string similar to [OPEN]
         ///run
-        /// Door -&gt; Open
+        /// Door Light -&gt; Enable
         ///as @open_door_1
         ///
         ///when @open_door_1
         ///run
-        /// Door Light -&gt; On
+        /// Door -&gt; Open
         ///as @open_door_2
         ///
         ///when @open_door_1, @open_door_2
         ///run
-        /// Door -&gt; Disable
+        /// Door Light -&gt; Disable
         ///as @open_door_3.
         /// </summary>
         internal static string TestDependences {
@@ -102,17 +114,17 @@ namespace SequentialScript.Test.CustomData {
         /// <summary>
         ///   Looks up a localized string similar to [OPEN]
         ///run
-        /// Door -&gt; Open
+        /// Door Light -&gt; Enable
         ///as @open_door_1
         ///
-        ///when @open_door_1
+        ///when @open_door_1, @open_door_3
         ///run
-        /// Door Light -&gt; On
+        /// Door -&gt; Open
         ///as @open_door_2
         ///
         ///when @open_door_1, @open_door_2
         ///run
-        /// Door -&gt; Disable
+        /// Door Light -&gt; Disable
         ///as @open_door_3.
         /// </summary>
         internal static string TestDependences_Recursivity {

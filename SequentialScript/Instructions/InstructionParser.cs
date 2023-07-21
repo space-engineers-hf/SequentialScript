@@ -111,11 +111,14 @@ namespace IngameScript
                             .Where(line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith("//")) // Ignore empty lines and comments.
                             .Select((line, index) =>
                             {
+                                // Remove comments
                                 var lineComments = line.Split(new[] { "//" }, StringSplitOptions.None);
                                 var lineWithoutComments = lineComments.First();
+
+                                // Take BlockName and ActionName
                                 var lineItems = lineWithoutComments.Trim().Split(new[] { "->" }, StringSplitOptions.RemoveEmptyEntries);
                                 string blockName = null, actionName = null;
-                                bool ignore, isValid;
+                                bool isValid;
 
                                 if (lineItems.Length > 0)
                                 {
@@ -127,26 +130,21 @@ namespace IngameScript
                                 }
                                 isValid = lineItems.Length == 2;
 
-                                var ignoreIndex = actionName.IndexOf("/NoCheck", StringComparison.OrdinalIgnoreCase);
-                                if (ignoreIndex > -1)
-                                {
-                                    ignore = true;
-                                    actionName = actionName.Substring(0, ignoreIndex).TrimEnd();
-                                }
-                                else
-                                {
-                                    ignore = false;
-                                }
+                                // Arguments
+                                var arguments = GetArguments(actionName);
+
                                 return new
                                 {
                                     Line = index + 1,
                                     BlockName = blockName,
-                                    ActionName = actionName,
-                                    Ignore = ignore,
+                                    ActionName = arguments[""].Trim(),
+                                    Arguments = arguments.Where(x => !string.IsNullOrEmpty(x.Key)).ToDictionary(x => x.Key, x => x.Value),
+                                    Ignore = arguments.ContainsKey("NoCheck"),
                                     IsValid = isValid
                                 };
                             })
                         ;
+
                         var invalid = actions.Where(x => !x.IsValid);
                         if (invalid.Any())
                         {
@@ -183,6 +181,7 @@ namespace IngameScript
                                     {
                                         BlockName = x.BlockName,
                                         ActionName = x.ActionName,
+                                        Arguments = x.Arguments,
                                         Ignore = x.Ignore,
                                         IsValid = x.IsValid
                                     })
@@ -304,6 +303,63 @@ namespace IngameScript
                     CommandName = commandName,
                     Body = instructionBlocks
                 };
+            }
+            return result;
+        }
+
+        private static IDictionary<string, string> GetArguments(string value)
+        {
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            int i;
+            char c;
+            int stage = 0; // 0: None; 1: Reading argument; 2: Reading Value; 3: Save;
+            bool instring = false;
+            var keyBuilder = new System.Text.StringBuilder();
+            var valueBuilder = new System.Text.StringBuilder();
+
+            for (i = 0; i < value.Length; i++)
+            {
+                c = value[i];
+
+                if (c == '/' && !instring)
+                {
+                    result.Add(keyBuilder.ToString(), valueBuilder.ToString());
+                    keyBuilder.Clear();
+                    valueBuilder.Clear();
+                    stage = 1; // Begin argument
+                }
+                else if (c == ':' && !instring)
+                {
+                    stage = 2; // Begin value
+                }
+                else if (c == ' ' && !instring && stage > 0)
+                {
+                    stage = 3; // Save.
+                }
+                else if (c == '\"')
+                {
+                    instring = !instring;
+                }
+                else if (stage == 1)
+                {
+                    keyBuilder.Append(c);
+                }
+                else if (stage == 2 || stage == 0)
+                {
+                    valueBuilder.Append(c);
+                }
+            }
+            if (stage < 3)
+            {
+                if (instring)
+                {
+                    throw new FormatException("String not closed.");
+                }
+                else
+                {
+                    result.Add(keyBuilder.ToString(), valueBuilder.ToString());
+                }
             }
             return result;
         }

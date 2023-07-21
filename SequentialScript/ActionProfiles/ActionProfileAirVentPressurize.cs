@@ -25,8 +25,8 @@ namespace IngameScript
 
         public override IEnumerable<string> ActionNames => new[] { "Pressurize" };
 
-        public override Action<IMyAirVent> OnActionCallback => 
-            block => block.Depressurize = false;
+        public override Action<IMyAirVent, IDictionary<string, string>> OnActionCallback =>
+            (block, args) => block.Depressurize = false;
 
         public override Func<IMyAirVent, bool> IsCompleteCallback => 
             block => block.Status == VentStatus.Pressurized;

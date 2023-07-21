@@ -25,8 +25,8 @@ namespace IngameScript
 
         public override IEnumerable<string> ActionNames => new[] { "Disable", "Off" };
 
-        public override Action<IMyFunctionalBlock> OnActionCallback =>
-            block => block.Enabled = false;
+        public override Action<IMyFunctionalBlock, IDictionary<string, string>> OnActionCallback =>
+            (block, args) => block.Enabled = false;
 
         public override Func<IMyFunctionalBlock, bool> IsCompleteCallback =>
             block => !block.Enabled;

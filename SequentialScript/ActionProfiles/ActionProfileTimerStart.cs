@@ -25,8 +25,8 @@ namespace IngameScript
 
         public override IEnumerable<string> ActionNames => new[] { "Start" };
 
-        public override Action<IMyTimerBlock> OnActionCallback => 
-            block => block.StartCountdown();
+        public override Action<IMyTimerBlock, IDictionary<string, string>> OnActionCallback =>
+            (block, args) => block.StartCountdown();
 
         public override Func<IMyTimerBlock, bool> IsCompleteCallback => 
             block => !block.IsCountingDown;

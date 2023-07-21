@@ -24,11 +24,12 @@ namespace IngameScript
     {
 
         public abstract IEnumerable<string> ActionNames { get; }
-        public abstract Action<TMyTerminalBlock> OnActionCallback { get; }
+        public abstract Action<TMyTerminalBlock, IDictionary<string, string>> OnActionCallback { get; }
         public abstract Func<TMyTerminalBlock, bool> IsCompleteCallback { get; }
 
-        Action<IMyTerminalBlock> IActionProfile.OnActionCallback =>
-            block => OnActionCallback(GetMyTerminalBlock(block));
+
+        Action<IMyTerminalBlock, IDictionary<string, string>> IActionProfile.OnActionCallback =>
+            (block, args) => OnActionCallback(GetMyTerminalBlock(block), args);
 
         Func<IMyTerminalBlock, bool> IActionProfile.IsCompleteCallback =>
             block => IsCompleteCallback(GetMyTerminalBlock(block));

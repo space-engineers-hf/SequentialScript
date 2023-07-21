@@ -69,7 +69,7 @@ namespace IngameScript
                     {
                         foreach (var block in blocks)
                         {
-                            actions.Add(new TaskAction { Block = block, ActionProfile = ActionProfiles.GetActionProfile(block, instruction.ActionName), Ignore = instruction.Ignore });
+                            actions.Add(new TaskAction { Block = block, ActionProfile = ActionProfiles.GetActionProfile(block, instruction.ActionName), Arguments = instruction.Arguments, Ignore = instruction.Ignore });
                         }
                     }
                     else
@@ -113,7 +113,7 @@ namespace IngameScript
                     {
                         foreach (var action in task.Actions)
                         {
-                            action.ActionProfile.OnActionCallback(action.Block);
+                            action.ActionProfile.OnActionCallback(action.Block, action.Arguments);
                         }
                         task.IsRunning = true;
                     }

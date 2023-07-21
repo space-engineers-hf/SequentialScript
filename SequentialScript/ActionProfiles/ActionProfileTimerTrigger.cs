@@ -25,8 +25,8 @@ namespace IngameScript
 
         public override IEnumerable<string> ActionNames => new[] { "Trigger" };
 
-        public override Action<IMyTimerBlock> OnActionCallback => 
-            block => block.Trigger();
+        public override Action<IMyTimerBlock, IDictionary<string, string>> OnActionCallback =>
+            (block, args) => block.Trigger();
 
         public override Func<IMyTimerBlock, bool> IsCompleteCallback => 
             block => true;

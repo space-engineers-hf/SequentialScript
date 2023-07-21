@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SequentialScript.Test
 {
-    sealed class AssertInstrucion
+    sealed class InstrucionAssert
     {
 
 

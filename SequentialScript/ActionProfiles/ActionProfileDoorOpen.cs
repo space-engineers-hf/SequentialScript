@@ -25,8 +25,8 @@ namespace IngameScript
 
         public override IEnumerable<string> ActionNames => new[] { "Open" };
 
-        public override Action<IMyDoor> OnActionCallback =>
-            block => block.OpenDoor();
+        public override Action<IMyDoor, IDictionary<string, string>> OnActionCallback =>
+            (block, args) => block.OpenDoor();
 
         public override Func<IMyDoor, bool> IsCompleteCallback =>
             block => block.Status == DoorStatus.Open;

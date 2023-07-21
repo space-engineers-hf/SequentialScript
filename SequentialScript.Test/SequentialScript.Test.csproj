@@ -52,7 +52,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssertInstrucion.cs" />
+    <Compile Include="InstrucionAssert.cs" />
     <Compile Include="CustomData\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -71,6 +71,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="CustomData\TestArguments.txt" />
     <Content Include="CustomData\TestComments.txt" />
     <Content Include="CustomData\TestDependences_Recursivity.txt" />
     <Content Include="CustomData\TestDependences.txt" />

@@ -25,8 +25,8 @@ namespace IngameScript
 
         public override IEnumerable<string> ActionNames => new[] { "Stop" };
 
-        public override Action<IMySoundBlock> OnActionCallback => 
-            block => block.Stop();
+        public override Action<IMySoundBlock, IDictionary<string, string>> OnActionCallback =>
+            (block, args) => block.Stop();
 
         public override Func<IMySoundBlock, bool> IsCompleteCallback => 
             block => true;

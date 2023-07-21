@@ -25,8 +25,8 @@ namespace IngameScript
 
         public override IEnumerable<string> ActionNames => new[] { "Retract" };
 
-        public override Action<IMyPistonBase> OnActionCallback => 
-            block => block.Retract();
+        public override Action<IMyPistonBase, IDictionary<string, string>> OnActionCallback =>
+            (block, args) => block.Retract();
 
         public override Func<IMyPistonBase, bool> IsCompleteCallback => 
             block => block.Status == PistonStatus.Retracted;

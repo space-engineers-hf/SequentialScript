@@ -25,8 +25,8 @@ namespace IngameScript
 
         public override IEnumerable<string> ActionNames => new[] { "Forward" };
 
-        public override Action<IMyMotorStator> OnActionCallback
-            => block => block.TargetVelocityRPM = Math.Abs(block.TargetVelocityRPM);
+        public override Action<IMyMotorStator, IDictionary<string, string>> OnActionCallback =>
+            (block, args) => block.TargetVelocityRPM = Math.Abs(block.TargetVelocityRPM);
 
         public override Func<IMyMotorStator, bool> IsCompleteCallback
             => block => block.Angle >= block.UpperLimitRad;
