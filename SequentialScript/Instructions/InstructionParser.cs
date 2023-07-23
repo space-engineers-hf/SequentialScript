@@ -138,7 +138,7 @@ namespace IngameScript
                                     Line = index + 1,
                                     BlockName = blockName,
                                     ActionName = arguments[""].Trim(),
-                                    Arguments = arguments.Where(x => !string.IsNullOrEmpty(x.Key)).ToDictionary(x => x.Key, x => x.Value),
+                                    Arguments = arguments.Where(x => !string.IsNullOrEmpty(x.Key)).ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase),
                                     Ignore = arguments.ContainsKey("NoCheck"),
                                     IsValid = isValid
                                 };
