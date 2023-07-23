@@ -92,7 +92,7 @@ namespace IngameScript
                         {
                             _tasks = Tasks.CreateTasks(((InstructionCommand)command).Body, GridTerminalSystem.GetBlocks(), GridTerminalSystem.GetBlockGroups());
                             Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                            Echo("Started.");
+                            AdvancedEcho("Started.");
                         }
                         else if (command is ConditionCommandInstruction)
                         {
@@ -131,7 +131,7 @@ namespace IngameScript
                                     thenCommand = (InstructionCommand)commands[condition.Then.Single()];
                                     _tasks = Tasks.CreateTasks(thenCommand.Body, blocks, groups);
                                     Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                                    Echo("Started.");
+                                    AdvancedEcho("Started.");
                                 }
                             }
 
@@ -139,12 +139,12 @@ namespace IngameScript
                     }
                     else
                     {
-                        Echo($"ERROR: Command not found: '{argument}'");
+                        AdvancedEcho($"ERROR: Command not found: '{argument}'");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Echo($"ERROR: {ex.Message}");
+                    AdvancedEcho($"ERROR: {ex.Message}");
                 }
             }
         }
@@ -161,6 +161,6 @@ namespace IngameScript
                 display.WriteText(message);
             }
         }
-        
+
     }
 }
