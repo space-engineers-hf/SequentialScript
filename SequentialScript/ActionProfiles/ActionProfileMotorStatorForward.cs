@@ -29,7 +29,8 @@ namespace IngameScript
             (block, args) => block.TargetVelocityRPM = Math.Abs(block.TargetVelocityRPM);
 
         public override Func<IMyMotorStator, IDictionary<string, string>, bool> IsCompleteCallback =>
-            (block, args) => block.Angle >= block.UpperLimitRad;
+            // Rotor is moving in positive direction. If upper limit is set, it checks that angle has arrived to the limit.
+            (block, args) => block.TargetVelocityRad > 0 && (block.UpperLimitRad == float.MaxValue || block.Angle >= block.UpperLimitRad);
 
     }
 }
