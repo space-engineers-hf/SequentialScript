@@ -23,6 +23,8 @@ namespace IngameScript
     partial class Program : MyGridProgram
     {
 
+        static bool DEBUG_IN_SCREEN = false;
+
         IEnumerable<Task> _tasks;
 
         public Program()
@@ -61,13 +63,13 @@ namespace IngameScript
                             debug.AppendLine($"  - {action.Block.DisplayNameText}.{action.ActionProfile.ActionNames.First()} = {action.ActionProfile.IsCompleteCallback(action.Block, action.Arguments)}");
                         }
                     }
-                    Echo($"{debug}");
+                    AdvancedEcho($"{debug}");
                 }
                 else
                 {
                     // Finish cycle.
                     Runtime.UpdateFrequency = UpdateFrequency.None;
-                    Echo("Done.");
+                    AdvancedEcho("Done.");
                 }
             }
             else
@@ -146,5 +148,19 @@ namespace IngameScript
                 }
             }
         }
+
+        void AdvancedEcho(string message)
+        {
+            Echo(message);
+            if (DEBUG_IN_SCREEN)
+            {
+                var displays = DisplayHelper.GetTextSurfaces(new[] { Me });
+                var display = displays.First().TextSurface;
+
+                display.ContentType = ContentType.TEXT_AND_IMAGE;
+                display.WriteText(message);
+            }
+        }
+        
     }
 }
