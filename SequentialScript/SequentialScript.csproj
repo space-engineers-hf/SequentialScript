@@ -38,9 +38,11 @@
   <Import Project="MDK/MDK.options.props" />
   <Import Project="MDK/MDK.paths.props" Condition="exists('MDK/MDK.paths.props')" />
   <ItemGroup>
+    <Compile Include="Helper.cs" />
     <Compile Include="ActionProfiles\ActionProfile.cs" />
     <Compile Include="ActionProfiles\ActionProfileGasTankAuto.cs" />
     <Compile Include="ActionProfiles\ActionProfileGasTankStockpile.cs" />
+    <Compile Include="ActionProfiles\ActionProfileLcdDisplay.cs" />
     <Compile Include="ActionProfiles\ActionProfileLightSet.cs" />
     <Compile Include="ActionProfiles\ActionProfileConnectorUnlock.cs" />
     <Compile Include="ActionProfiles\ActionProfileConnectorLock.cs" />

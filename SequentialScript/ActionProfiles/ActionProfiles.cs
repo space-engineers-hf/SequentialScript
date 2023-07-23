@@ -39,6 +39,7 @@ namespace IngameScript
             new ActionProfileConnectorLock(), new ActionProfileConnectorUnlock(),
             new ActionProfileLightSet(),
             new ActionProfileGasTankStockpile(), new ActionProfileGasTankAuto(),
+            new ActionProfileLcdDisplay(),
         };
 
         public static IActionProfile GetActionProfile(IMyTerminalBlock block, string action)
