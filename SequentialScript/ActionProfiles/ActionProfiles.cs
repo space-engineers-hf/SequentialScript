@@ -34,6 +34,11 @@ namespace IngameScript
             new ActionProfileTimerStart(), new ActionProfileTimerStop(), new ActionProfileTimerTrigger(),
             new ActionProfileSoundPlay(), new ActionProfileSoundStop(),
             new ActionProfileMotorStatorForward(), new ActionProfileMotorStatorBack(),
+            new ActionProfileProgrammableBlockRun(),
+            new ActionProfileBatteryAuto(), new ActionProfileBatteryRecharge(), new ActionProfileBatteryDischarge(),
+            new ActionProfileConnectorLock(), new ActionProfileConnectorUnlock(),
+            new ActionProfileLightSet(),
+            new ActionProfileGasTankStockpile(), new ActionProfileGasTankAuto(),
         };
 
         public static IActionProfile GetActionProfile(IMyTerminalBlock block, string action)

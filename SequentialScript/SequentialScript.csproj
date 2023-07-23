@@ -39,10 +39,19 @@
   <Import Project="MDK/MDK.paths.props" Condition="exists('MDK/MDK.paths.props')" />
   <ItemGroup>
     <Compile Include="ActionProfiles\ActionProfile.cs" />
+    <Compile Include="ActionProfiles\ActionProfileGasTankAuto.cs" />
+    <Compile Include="ActionProfiles\ActionProfileGasTankStockpile.cs" />
+    <Compile Include="ActionProfiles\ActionProfileLightSet.cs" />
+    <Compile Include="ActionProfiles\ActionProfileConnectorUnlock.cs" />
+    <Compile Include="ActionProfiles\ActionProfileConnectorLock.cs" />
+    <Compile Include="ActionProfiles\ActionProfileBatteryAuto.cs" />
     <Compile Include="ActionProfiles\ActionProfileMotorStatorBack.cs" />
     <Compile Include="ActionProfiles\ActionProfileMotorStatorForward.cs" />
     <Compile Include="ActionProfiles\ActionProfileSoundStop.cs" />
     <Compile Include="ActionProfiles\ActionProfileSoundPlay.cs" />
+    <Compile Include="ActionProfiles\ActionProfileProgrammableBlockRun.cs" />
+    <Compile Include="ActionProfiles\ActionProfileBatteryRecharge.cs" />
+    <Compile Include="ActionProfiles\ActionProfileBatteryDischarge.cs" />
     <Compile Include="ActionProfiles\ActionProfileTimerTrigger.cs" />
     <Compile Include="ActionProfiles\ActionProfileTimerStop.cs" />
     <Compile Include="ActionProfiles\ActionProfileTimerStart.cs" />
