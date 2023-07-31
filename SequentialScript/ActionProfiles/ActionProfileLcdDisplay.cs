@@ -20,53 +20,67 @@ using VRageMath;
 
 namespace IngameScript
 {
-    sealed class ActionProfileLcdDisplay : ActionProfile<IMyTextPanel>
+    sealed class ActionProfileLcdDisplay : ActionProfile<IMyTerminalBlock>
     {
 
-        public override IEnumerable<string> ActionNames => new[] { "Display", "Set" };
+        public override IEnumerable<string> ActionNames => new[] { "Display" };
 
-        public override Action<IMyTextPanel, IDictionary<string, string>> OnActionCallback =>
+        public override Action<IMyTerminalBlock, IDictionary<string, string>> OnActionCallback =>
             (block, args) =>
             {
-                var index = GetTextSurfaceIndex(args);
-                var textSurface = GetTextSurface(block, index);
-                string value;
+                if (block is IMyTextSurfaceProvider)
+                {
+                    var index = GetTextSurfaceIndex(args);
+                    var textSurface = GetTextSurface(block, index);
+                    string value;
 
-                if (args.TryGetValue("BACKGROUND", out value))
-                {
-                    textSurface.BackgroundColor = Helper.ParseColor(value);
+                    if (args.TryGetValue("BACKGROUND", out value))
+                    {
+                        textSurface.BackgroundColor = Helper.ParseColor(value);
+                    }
+                    if (args.TryGetValue("COLOR", out value))
+                    {
+                        textSurface.FontColor = Helper.ParseColor(value);
+                    }
+                    if (args.TryGetValue("TEXT", out value))
+                    {
+                        textSurface.WriteText(value);
+                    }
                 }
-                if (args.TryGetValue("COLOR", out value))
+                else
                 {
-                    textSurface.FontColor = Helper.ParseColor(value);
-                }
-                if (args.TryGetValue("TEXT", out value))
-                {
-                    textSurface.WriteText(value);
+                    throw new NotSupportedException($"Block '{block.DisplayNameText}' not supports displays.");
                 }
             };
 
-        public override Func<IMyTextPanel, IDictionary<string, string>, bool> IsCompleteCallback =>
+        public override Func<IMyTerminalBlock, IDictionary<string, string>, bool> IsCompleteCallback =>
             (block, args) =>
             {
-                bool result = true;
-                var index = GetTextSurfaceIndex(args);
-                var textSurface = GetTextSurface(block, index);
-                string value;
+                if (block is IMyTextSurfaceProvider)
+                {
+                    bool result = true;
+                    var index = GetTextSurfaceIndex(args);
+                    var textSurface = GetTextSurface(block, index);
+                    string value;
 
-                if (args.TryGetValue("BACKGROUND", out value))
-                {
-                    result &= (textSurface.BackgroundColor == Helper.ParseColor(value));
+                    if (args.TryGetValue("BACKGROUND", out value))
+                    {
+                        result &= (textSurface.BackgroundColor == Helper.ParseColor(value));
+                    }
+                    if (args.TryGetValue("COLOR", out value))
+                    {
+                        result &= (textSurface.FontColor == Helper.ParseColor(value));
+                    }
+                    if (args.TryGetValue("TEXT", out value))
+                    {
+                        result &= (textSurface.GetText() == value);
+                    }
+                    return result;
                 }
-                if (args.TryGetValue("COLOR", out value))
+                else
                 {
-                    result &= (textSurface.FontColor == Helper.ParseColor(value));
+                    throw new NotSupportedException($"Block '{block.DisplayNameText}' not supports displays.");
                 }
-                if (args.TryGetValue("TEXT", out value))
-                {
-                    result &= (textSurface.GetText() == value);
-                }
-                return result;
             };
 
 
