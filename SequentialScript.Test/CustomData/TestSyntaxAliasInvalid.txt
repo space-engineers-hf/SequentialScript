@@ -1,0 +1,10 @@
+﻿[TEST]
+run
+ Air Vent -> Depressurize
+as @room_depressurized
+
+when @room_depressurized
+run
+ Door 1 -> Enable
+ Door 1 -> Open
+as door_opened

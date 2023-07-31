@@ -71,11 +71,15 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="CustomData\TestHydrogen.txt" />
     <Content Include="CustomData\TestArguments.txt" />
     <Content Include="CustomData\TestComments.txt" />
     <Content Include="CustomData\TestDependences_Recursivity.txt" />
     <Content Include="CustomData\TestDependences.txt" />
     <Content Include="CustomData\TestSimple.txt" />
+    <Content Include="CustomData\TestSyntaxAliasDuplicated.txt" />
+    <Content Include="CustomData\TestSyntaxAliasInvalid.txt" />
+    <Content Include="CustomData\TestSyntaxInstructionInvalid.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="CustomData\Resources.resx">

@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using IngameScript.Instructions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
@@ -159,5 +160,43 @@ namespace SequentialScript.Test
             InstrucionAssert.AreEqual(expected, commands);
         }
 
+        [TestMethod]
+        public void TestSyntaxAliasInvalid()
+        {
+
+            try
+            {
+                IngameScript.InstructionParser.Parse(CustomData.Resources.TestSyntaxAliasInvalid);
+                Assert.Fail($"Exception SyntaxException was expected.");
+            }
+            catch (SyntaxException ex) when (ex.Line == 10)
+            {
+                // Test sucessfull.
+            }
+        }
+
+        [TestMethod]
+        public void TestSyntaxAliasDuplicated()
+        {
+
+            try
+            {
+                IngameScript.InstructionParser.Parse(CustomData.Resources.TestSyntaxAliasDuplicated);
+                Assert.Fail($"Exception SyntaxException was expected.");
+            }
+            catch (SyntaxException ex) when (ex.Line == 11)
+            {
+                // Test sucessfull.
+            }
+        }
+
+        [TestMethod]
+        public void TestHydrogen()
+        {
+            IDictionary<string, IngameScript.ICommandInstruction> commands;
+
+            commands = IngameScript.InstructionParser.Parse(CustomData.Resources.TestHydrogen);
+            commands.ToString();
+        }
     }
 }

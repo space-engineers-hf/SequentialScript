@@ -1,0 +1,11 @@
+﻿[TEST]
+run
+ Block 1 -> Enabled
+ Block 2 -> Enabled
+as @block_name
+
+run
+ Block 3 -> Enabled
+ Block 4 -> Enabled
+ Block 5 -> Enabled
+as @block_name

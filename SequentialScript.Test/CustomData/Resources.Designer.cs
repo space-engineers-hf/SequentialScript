@@ -63,8 +63,8 @@ namespace SequentialScript.Test.CustomData {
         /// <summary>
         ///   Looks up a localized string similar to [OPEN]
         ///run
-        /// Door -&gt; Open /NoCheck /Key1:Value /Key2:&quot;Value with spaces&quot; /Key3:&quot;Value with special characters :/&quot;
-        ///as @open_door.
+        /// Block -&gt; Some Action /NoCheck /Key1:Value /Key2:&quot;Value with spaces&quot; /Key3:&quot;Value with special characters :/&quot;
+        ///as @action.
         /// </summary>
         internal static string TestArguments {
             get {
@@ -134,6 +134,36 @@ namespace SequentialScript.Test.CustomData {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to [HYDROGEN_STOCKPILE]
+        ///run
+        /// Hydrogen Example (Thruster) -&gt; Disable
+        ///as @thrusters_disabled
+        ///
+        ///run
+        /// Hydrogen Example (Status LCD) -&gt; Set /Index:-1 /Background:YELLOW /Text:Connecting...
+        /// Hydrogen Example (Piston) -&gt; Extend
+        ///as piston_extended
+        ///
+        ///when @piston_extended
+        ///run
+        /// Hydrogen Example (Connector) -&gt; Connect
+        ///as @connector_locked
+        ///
+        ///when @connector_locked
+        ///run
+        /// Hydrogen Example (Status LCD) -&gt; Set /Index:-1 /Background:BLUE /Text:Recharging...
+        /// Hydrogen Example (Tank) -&gt; Stockpile
+        ///as @tank_full
+        ///
+        /// [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string TestHydrogen {
+            get {
+                return ResourceManager.GetString("TestHydrogen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to [OPEN]
         ///run
         /// Door -&gt; Open
@@ -142,6 +172,42 @@ namespace SequentialScript.Test.CustomData {
         internal static string TestSimple {
             get {
                 return ResourceManager.GetString("TestSimple", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string TestSyntaxAliasDuplicated {
+            get {
+                return ResourceManager.GetString("TestSyntaxAliasDuplicated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to [TEST]
+        ///run
+        /// Air Vent -&gt; Depressurize
+        ///as @room_depressurized
+        ///
+        ///when @room_depressurized
+        ///run
+        /// Door 1 -&gt; Enable
+        /// Door 1 -&gt; Open
+        ///as door_opened.
+        /// </summary>
+        internal static string TestSyntaxAliasInvalid {
+            get {
+                return ResourceManager.GetString("TestSyntaxAliasInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string TestSyntaxInstructionInvalid {
+            get {
+                return ResourceManager.GetString("TestSyntaxInstructionInvalid", resourceCulture);
             }
         }
     }

@@ -130,7 +130,19 @@
   <data name="TestDependences_Recursivity" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>TestDependences_Recursivity.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="TestHydrogen" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>TestHydrogen.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
   <data name="TestSimple" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>TestSimple.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="TestSyntaxAliasDuplicated" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>TestSyntaxAliasDuplicated.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="TestSyntaxAliasInvalid" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>TestSyntaxAliasInvalid.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="TestSyntaxInstructionInvalid" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>TestSyntaxInstructionInvalid.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
 </root>

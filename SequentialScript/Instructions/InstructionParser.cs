@@ -1,4 +1,5 @@
-﻿using Sandbox.Game.EntityComponents;
+﻿using IngameScript.Instructions;
+using Sandbox.Game.EntityComponents;
 using Sandbox.Game.GameSystems.Chat;
 using Sandbox.Game.Gui;
 using Sandbox.ModAPI.Ingame;
@@ -28,8 +29,8 @@ namespace IngameScript
 
         // https://regex101.com/r/2Vysiy/5
         const string commandPattern = @"\[(?<command>.*?)\](?:\r?\n)+(?<body>[\s\S]*?)(?=\r?\n\[(.*?)\]|$)";
-        // https://regex101.com/r/DEsq3A/2
-        const string bodyPattern = @"(?:when\s+(?<when>.*?)\s+)?run\s+(?<run>.*?)\s+as\s+(?<var>@\w+|none);?";
+        // https://regex101.com/r/DEsq3A/3
+        const string bodyPattern = @"(?:when\s+(?:(?<when>[\w@,| ]*)\s+)(?:\/\/[ \w]+\s+)?)?run(?<run>\s?.*?)\s+as\s+(?<var>[\w@]+)(?:\r?|;)";
         // https://regex101.com/r/fu9UHl/6
         const string ifPattern = @"(?:(?<clausule>if\s+|else\s?if\s+|else\s?)(?<condition>#\w+)?[\r\n]+(?<body>.*?)(?=[\r\n]+(?<close>if|else if|else|end)))";
 
@@ -78,7 +79,7 @@ namespace IngameScript
 
             if (bodyMatches.OfType<System.Text.RegularExpressions.Match>().Any())
             {
-                var previousIndex = 0;
+                var previousIndex = -1;
                 var lineCount = 1;
 
                 // Match blocks and its instructions.
@@ -87,25 +88,38 @@ namespace IngameScript
                 {
                     int lineStart;
 
-                    lineCount += CheckSyntax(bodyContent, previousIndex, bodyMatch.Index, lineCount);
+                    try
+                    {
+                        lineCount += CheckSyntax(bodyContent, previousIndex + 1, bodyMatch.Index); // Search invalid strings from previous body match to new body match.
+                    }
+                    catch (SyntaxException ex)
+                    {
+                        throw new SyntaxException(ex.OriginalMessage, lineCount + ex.Line, ex.Pos, ex.InnerException);
+                    }
                     lineStart = lineCount;
                     lineCount += GetLineCount(bodyContent, bodyMatch.Index, bodyMatch.Length);
 
                     var whenGroup = bodyMatch.Groups["when"]?.Value;
-                    var runGroup = bodyMatch.Groups["run"].Value;
-                    var alias = bodyMatch.Groups["var"].Value.Trim();
+                    var runGroup = bodyMatch.Groups["run"];
+                    var run = runGroup.Value;
+                    var aliasGroup = bodyMatch.Groups["var"];
+                    var alias = aliasGroup.Value.Trim();
 
                     if (string.IsNullOrEmpty(alias) || !(alias == "none" || alias.StartsWith("@")))
                     {
-                        throw new FormatException("Invalid text after 'as' clausule.");
+                        throw new SyntaxException("Invalid text after 'as' clausule.",
+                            lineStart + GetLineCount(bodyContent, bodyMatch.Index, aliasGroup.Index - bodyMatch.Index)
+                        );
                     }
                     else if (instructionBlocks.ContainsKey(alias))
                     {
-                        throw new ArgumentException($"'{alias}' has been declared several times.");
+                        throw new SyntaxException($"'{alias}' has been declared several times.",
+                            lineStart + GetLineCount(bodyContent, bodyMatch.Index, aliasGroup.Index - bodyMatch.Index)
+                        );
                     }
                     else
                     {
-                        var actions = runGroup
+                        var actions = run
                             .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
                             .Select(line => line.Trim())
                             .Where(line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith("//")) // Ignore empty lines and comments.
@@ -148,7 +162,10 @@ namespace IngameScript
                         var invalid = actions.Where(x => !x.IsValid);
                         if (invalid.Any())
                         {
-                            throw new FormatException($"Invalid sentence in '{alias}' for lines: {string.Join(",", invalid.Select(x => x.Line))}");
+                            throw new SyntaxException(
+                                $"Invalid sentence in '{alias}' for lines: {string.Join(",", invalid.Select(x => x.Line))}",
+                                lineStart + GetLineCount(bodyContent, bodyMatch.Index, runGroup.Index - bodyMatch.Index)
+                            );
                         }
                         else
                         {
@@ -191,7 +208,16 @@ namespace IngameScript
                     }
                     previousIndex = bodyMatch.Index + bodyMatch.Length;
                 }
-                CheckSyntax(bodyContent, previousIndex, bodyContent.Length, lineCount);
+
+                // Search invalid strings from previous body match to the end of the string.
+                try
+                {
+                    CheckSyntax(bodyContent, previousIndex, bodyContent.Length);
+                }
+                catch (SyntaxException ex)
+                {
+                    throw new SyntaxException(ex.OriginalMessage, lineCount + ex.Line, ex.Pos, ex.InnerException);
+                }
 
                 // Check dependences.
                 foreach (var item in instructionBlocks.Values)
@@ -391,9 +417,8 @@ namespace IngameScript
         /// <summary>
         /// Checks if there are unknown instructions in the specific string range and returns the number of lines.
         /// </summary>
-        /// <param name="lineCount">Current line count, before start index.</param>
-        /// <returns></returns>
-        private static int CheckSyntax(string content, int startIndex, int endIndex, int lineCount)
+        /// <returns>Number of lines</returns>
+        private static int CheckSyntax(string content, int startIndex, int endIndex)
         {
             var substring = content.Substring(startIndex, endIndex - startIndex);
             var lines = substring.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None).Select(x => x.Trim());
@@ -422,19 +447,19 @@ namespace IngameScript
 
                 if (validate)
                 {
-                    var line = buffer.ToString().Trim();
+                    var value = buffer.ToString().Trim();
 
-                    if (string.IsNullOrEmpty(line))
+                    if (string.IsNullOrEmpty(value))
                     {
                         // Empty line.
                     }
-                    else if (line.StartsWith("//"))
+                    else if (value.StartsWith("//"))
                     {
                         // It is a comment.
                     }
                     else
                     {
-                        throw new Exception($"Syntaxt exception near '{line}'. Line {lineCount + i}");
+                        throw new SyntaxException($"Syntaxt exception near '{value}'.", i);
                     }
                     buffer.Clear();
                     i++;
