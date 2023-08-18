@@ -29,7 +29,6 @@ namespace SequentialScript.Test
                                 ActionName = "Open",
                                 Arguments = new Dictionary<string, string> { },
                                 IsValid = true,
-                                Ignore = false
                             }},
                         } }
                     }.Values
@@ -57,7 +56,6 @@ namespace SequentialScript.Test
                                 ActionName = "Open",
                                 Arguments = new Dictionary<string, string> { },
                                 IsValid = true,
-                                Ignore = false
                             }},
                         } }
                     }.Values
@@ -85,7 +83,6 @@ namespace SequentialScript.Test
                                 ActionName = "Enable",
                                 Arguments = new Dictionary<string, string> { },
                                 IsValid = true,
-                                Ignore = false
                             }},
                         } },
                         { "@open_door_2", new IngameScript.InstructionBlock {
@@ -96,7 +93,6 @@ namespace SequentialScript.Test
                                 ActionName = "Open",
                                 Arguments = new Dictionary<string, string> { },
                                 IsValid = true,
-                                Ignore = false
                             }},
                         } },
                         { "@open_door_3", new IngameScript.InstructionBlock {
@@ -107,7 +103,6 @@ namespace SequentialScript.Test
                                 ActionName = "Disable",
                                 Arguments = new Dictionary<string, string> { },
                                 IsValid = true,
-                                Ignore = false
                             }},
                         } }
                     }.Values
@@ -149,7 +144,6 @@ namespace SequentialScript.Test
                                     { "Key3", "Value with special characters :/" }
                                 },
                                 IsValid = true,
-                                Ignore = true
                             }},
                         } }
                     }.Values

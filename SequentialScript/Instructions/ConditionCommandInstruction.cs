@@ -24,7 +24,7 @@ namespace IngameScript
     {
 
         public string CommandName { get; set; }
-        public IEnumerable<ConditionBlockInstruction> Body { get; set; }
+        public IList<ConditionBlockInstruction> Body { get; set; }
 
     }
 }

@@ -44,7 +44,7 @@ namespace IngameScript
                     }
                     if (args.TryGetValue("TEXT", out value))
                     {
-                        textSurface.WriteText(value);
+                        textSurface.WriteText(value.Replace("\\n", "\n"));
                     }
                 }
                 else
@@ -73,7 +73,7 @@ namespace IngameScript
                     }
                     if (args.TryGetValue("TEXT", out value))
                     {
-                        result &= (textSurface.GetText() == value);
+                        result &= (textSurface.GetText() == value.Replace("\\n", "\n"));
                     }
                     return result;
                 }

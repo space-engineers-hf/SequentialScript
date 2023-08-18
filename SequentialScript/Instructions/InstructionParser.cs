@@ -153,7 +153,6 @@ namespace IngameScript
                                     BlockName = blockName,
                                     ActionName = arguments[""].Trim(),
                                     Arguments = arguments.Where(x => !string.IsNullOrEmpty(x.Key)).ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase),
-                                    Ignore = arguments.ContainsKey("NoCheck"),
                                     IsValid = isValid
                                 };
                             })
@@ -199,7 +198,6 @@ namespace IngameScript
                                         BlockName = x.BlockName,
                                         ActionName = x.ActionName,
                                         Arguments = x.Arguments,
-                                        Ignore = x.Ignore,
                                         IsValid = x.IsValid
                                     })
                                 });
