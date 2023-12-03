@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using VRage;
@@ -23,9 +24,16 @@ namespace IngameScript
     partial class Program : MyGridProgram
     {
 
-        static bool DEBUG_IN_SCREEN = false;
+        static readonly bool DEBUG_IN_SCREEN = false;
+        static readonly UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update10; // Update1, Update10, Update100
+        static readonly int UPDATE_TICKS = 0; // Very slow mode multiplier (for debug)
 
+        IDictionary<string, ICommandInstruction> _commands;
+        InstructionCommand _command;
         IEnumerable<Task> _tasks;
+        ConditionCommandInstruction _conditionCommand;
+        int _checkIndex;
+        int ticks;
 
         public Program()
         {
@@ -47,94 +55,70 @@ namespace IngameScript
 
             if (CommonHelper.IsCycle(updateSource))
             {
-                IEnumerable<Task> tasksRunning;
                 var debug = new StringBuilder();
+                var now = DateTime.UtcNow;
 
-                tasksRunning = _tasks.Run();
-                if (tasksRunning.Any())
+                if (UPDATE_TICKS == 0 || ticks % UPDATE_TICKS == 0)
                 {
-                    // Debug running tasks and its pending instructions.
-                    debug.AppendLine("Running:");
-                    foreach (var task in tasksRunning)
+                    if (_command != null)
                     {
-                        debug.AppendLine($" -> {task.Alias}");
-                        foreach (var action in task.Actions)
+                        IEnumerable<Task> thenTasks;
+
+                        thenTasks = Tasks.CreateTasks(_command.Body, GridTerminalSystem.GetBlocks(), GridTerminalSystem.GetBlockGroups());
+                        StartTasks(thenTasks, $"{debug}\nStarted.");
+                    }
+                    else if (_tasks != null)
+                    {
+                        IEnumerable<Task> tasksRunning;
+
+                        tasksRunning = _tasks.Run(debug);
+                        if (tasksRunning.Any())
                         {
-                            debug.AppendLine($"  - {action.Block.DisplayNameText}.{action.ActionProfile.ActionNames.First()} = {action.ActionProfile.IsCompleteCallback(action.Block, action.Arguments)}");
+                            AdvancedEcho($"{debug}");
+                            AdvancedEcho($"Running tasks: {(DateTime.UtcNow - now).TotalMilliseconds:N0}", true);
+                        }
+                        else
+                        {
+                            // Finish cycle.
+                            Runtime.UpdateFrequency = UpdateFrequency.None;
+                            AdvancedEcho("Done.", true);
                         }
                     }
-                    AdvancedEcho($"{debug}");
+                    else if (_conditionCommand != null)
+                    {
+                        Check(_conditionCommand);
+                        AdvancedEcho($"Condition command: {(DateTime.UtcNow - now).TotalMilliseconds:N0}", true);
+                    }
+                    else
+                    {
+                        throw new Exception("Invalid state.");
+                    }
+                    ticks = 0;
                 }
-                else
-                {
-                    // Finish cycle.
-                    Runtime.UpdateFrequency = UpdateFrequency.None;
-                    AdvancedEcho("Done.");
-                }
+                ticks++;
             }
             else
             {
-                IDictionary<string, ICommandInstruction> commands;
                 ICommandInstruction command;
 
                 try
                 {
-                    commands = InstructionParser.Parse(Me.CustomData);
-
+                    _commands = InstructionParser.Parse(Me.CustomData);
                     if (string.IsNullOrWhiteSpace(argument))
                     {
                         // TODO: Compilar todo.
                     }
-                    else if (commands.TryGetValue(argument, out command))
+                    else if (_commands.TryGetValue(argument, out command))
                     {
+
                         _tasks?.Cancel();
                         if (command is InstructionCommand)
                         {
-                            _tasks = Tasks.CreateTasks(((InstructionCommand)command).Body, GridTerminalSystem.GetBlocks(), GridTerminalSystem.GetBlockGroups());
-                            Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                            AdvancedEcho("Started.");
+                            StartCommand((InstructionCommand)command);
                         }
                         else if (command is ConditionCommandInstruction)
                         {
-                            var blocks = GridTerminalSystem.GetBlocks();
-                            var groups = GridTerminalSystem.GetBlockGroups();
-                            var conditionCommand = (ConditionCommandInstruction)command;
-                            var conditionBlocks = conditionCommand.Body.GetEnumerator();
-                            bool positive = false;
-
-                            while (!positive && conditionBlocks.MoveNext())
-                            {
-                                var condition = conditionBlocks.Current;
-
-                                // Check positive condition.
-                                if (string.IsNullOrEmpty(condition.When))
-                                {
-                                    positive = true; // 'else' condition.
-                                }
-                                else
-                                {
-                                    InstructionCommand whenCommand;
-                                    IEnumerable<Task> whenTasks;
-
-                                    whenCommand = (InstructionCommand)commands[condition.When];
-                                    whenTasks = Tasks.CreateTasks(whenCommand.Body, blocks, groups);
-                                    if (Tasks.IsCompleted(whenTasks))
-                                    {
-                                        positive = true;
-                                    }
-                                }
-                                if (positive)
-                                {
-                                    InstructionCommand thenCommand;
-
-                                    // TODO: Multiple tasks.
-                                    thenCommand = (InstructionCommand)commands[condition.Then.Single()];
-                                    _tasks = Tasks.CreateTasks(thenCommand.Body, blocks, groups);
-                                    Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                                    AdvancedEcho("Started.");
-                                }
-                            }
-
+                            StartCheck((ConditionCommandInstruction)command);
                         }
                     }
                     else
@@ -149,8 +133,119 @@ namespace IngameScript
             }
         }
 
-        void AdvancedEcho(string message)
+        
+        void StartCommand(InstructionCommand command, string message = "Command started.")
         {
+            _command = command;
+            _tasks = null;
+            _conditionCommand = null;
+            _checkIndex = 0;
+            Runtime.UpdateFrequency = UPDATE_FREQUENCY;
+            ticks = 1;
+
+            AdvancedEcho(message);
+        }
+
+        /// <summary>
+        /// Starts tasks.
+        /// </summary>
+        /// <param name="tasks"></param>
+        /// <param name="message"></param>
+        void StartTasks(IEnumerable<Task> tasks, string message = "Started.")
+        {
+            _command = null;
+            _tasks = tasks;
+            _conditionCommand = null;
+            Runtime.UpdateFrequency = UPDATE_FREQUENCY;
+            ticks = 1;
+
+            AdvancedEcho(message);
+        }
+
+
+        /// <summary>
+        /// Starts to check a condition command.
+        /// </summary>
+        /// <param name="conditionCommand"></param>
+        /// <param name="message"></param>
+        void StartCheck(ConditionCommandInstruction conditionCommand, string message = "")
+        {
+            _command = null;
+            _tasks = null;
+            _conditionCommand = conditionCommand;
+            _checkIndex = 0;
+            Runtime.UpdateFrequency = UPDATE_FREQUENCY;
+            ticks = 1;
+
+            AdvancedEcho(message);
+        }
+
+        /// <summary>
+        /// Checks if current command is done. 
+        /// </summary>
+        /// <param name="conditionCommand"></param>
+        void Check(ConditionCommandInstruction conditionCommand)
+        {
+            var debug = new StringBuilder();
+            var now = DateTime.UtcNow;
+
+            if (conditionCommand != null && _checkIndex < _commands.Count)
+            {
+                var blocks = GridTerminalSystem.GetBlocks();
+                var groups = GridTerminalSystem.GetBlockGroups();
+                bool positive = false;
+
+                var condition = conditionCommand.Body[_checkIndex];
+
+                debug.AppendLine($"{_checkIndex}");
+
+                // Check positive condition.
+                if (string.IsNullOrEmpty(condition.When))
+                {
+                    debug.AppendLine($"ELSE");
+                    positive = true; // 'else' condition.
+                }
+                else
+                {
+                    InstructionCommand whenCommand;
+                    IEnumerable<Task> whenTasks;
+
+                    whenCommand = (InstructionCommand)_commands[condition.When];
+                    whenTasks = Tasks.CreateTasks(whenCommand.Body, blocks, groups);
+
+                    debug.AppendLine($"{whenCommand.CommandName}");
+                    if (Tasks.IsCompleted(whenTasks, debug))
+                    {
+                        positive = true;
+                    }
+                }
+
+                if (positive)
+                {
+                    InstructionCommand thenCommand;
+
+                    // TODO: Multiple tasks.
+                    thenCommand = (InstructionCommand)_commands[condition.Then.Single()];
+                    StartCommand(thenCommand);
+                }
+                else
+                {
+                    _checkIndex++;
+                }
+            }
+        }
+
+        void AdvancedEcho(string message, bool append = false)
+        {
+            string value = message;
+
+            if (append)
+            {
+                var builder = new StringBuilder(Me.CustomInfo);
+
+                builder.Append(value);
+                message = builder.ToString();
+            }
             Echo(message);
             if (DEBUG_IN_SCREEN)
             {
