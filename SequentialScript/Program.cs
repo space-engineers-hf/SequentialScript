@@ -28,6 +28,9 @@ namespace IngameScript
         static readonly UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update10; // Update1, Update10, Update100
         static readonly int UPDATE_TICKS = 0; // Very slow mode multiplier (for debug)
 
+
+        DateTime _momento;
+        IDictionary<string, IEnumerable<IMyTerminalBlock>> _blocksDictionary;
         IDictionary<string, ICommandInstruction> _commands;
         InstructionCommand _command;
         IEnumerable<Task> _tasks;
@@ -52,6 +55,7 @@ namespace IngameScript
 
         public void Main(string argument, UpdateType updateSource)
         {
+            AdvancedEchoReset();
 
             if (CommonHelper.IsCycle(updateSource))
             {
@@ -64,7 +68,8 @@ namespace IngameScript
                     {
                         IEnumerable<Task> thenTasks;
 
-                        thenTasks = Tasks.CreateTasks(_command.Body, GridTerminalSystem.GetBlocks(), GridTerminalSystem.GetBlockGroups());
+                        AdvancedEcho($"Running {_command.CommandName}");
+                        thenTasks = Tasks.CreateTasks(_command.Body, _blocksDictionary);
                         StartTasks(thenTasks, $"{debug}\nStarted.");
                     }
                     else if (_tasks != null)
@@ -80,13 +85,14 @@ namespace IngameScript
                         else
                         {
                             // Finish cycle.
+                            _tasks = null;
                             Runtime.UpdateFrequency = UpdateFrequency.None;
                             AdvancedEcho("Done.", true);
                         }
                     }
                     else if (_conditionCommand != null)
                     {
-                        Check(_conditionCommand);
+                        CheckNextCondition();
                         AdvancedEcho($"Condition command: {(DateTime.UtcNow - now).TotalMilliseconds:N0}", true);
                     }
                     else
@@ -103,6 +109,7 @@ namespace IngameScript
 
                 try
                 {
+                    _tasks?.Cancel();
                     _commands = InstructionParser.Parse(Me.CustomData);
                     if (string.IsNullOrWhiteSpace(argument))
                     {
@@ -110,8 +117,13 @@ namespace IngameScript
                     }
                     else if (_commands.TryGetValue(argument, out command))
                     {
+                        var blockNames = _commands.Values
+                            .OfType<InstructionCommand>()
+                            .SelectMany(cmd => cmd.Body)
+                            .SelectMany(body => body.Instructions)
+                            .Select(instruction => instruction.BlockName);
 
-                        _tasks?.Cancel();
+                        _blocksDictionary = Helper.CreateBlockDictionary(blockNames, GridTerminalSystem.GetBlocks(), GridTerminalSystem.GetBlockGroups());
                         if (command is InstructionCommand)
                         {
                             StartCommand((InstructionCommand)command);
@@ -133,7 +145,7 @@ namespace IngameScript
             }
         }
 
-        
+
         void StartCommand(InstructionCommand command, string message = "Command started.")
         {
             _command = command;
@@ -181,21 +193,17 @@ namespace IngameScript
         }
 
         /// <summary>
-        /// Checks if current command is done. 
+        /// Checks if the next condition of the if current <see cref="ConditionCommandInstruction"/> is done.
         /// </summary>
-        /// <param name="conditionCommand"></param>
-        void Check(ConditionCommandInstruction conditionCommand)
+        void CheckNextCondition()
         {
             var debug = new StringBuilder();
-            var now = DateTime.UtcNow;
 
-            if (conditionCommand != null && _checkIndex < _commands.Count)
+            if (_conditionCommand != null && _checkIndex < _commands.Count)
             {
-                var blocks = GridTerminalSystem.GetBlocks();
-                var groups = GridTerminalSystem.GetBlockGroups();
                 bool positive = false;
 
-                var condition = conditionCommand.Body[_checkIndex];
+                var condition = _conditionCommand.Body[_checkIndex];
 
                 debug.AppendLine($"{_checkIndex}");
 
@@ -211,8 +219,7 @@ namespace IngameScript
                     IEnumerable<Task> whenTasks;
 
                     whenCommand = (InstructionCommand)_commands[condition.When];
-                    whenTasks = Tasks.CreateTasks(whenCommand.Body, blocks, groups);
-
+                    whenTasks = Tasks.CreateTasks(whenCommand.Body, _blocksDictionary);
                     debug.AppendLine($"{whenCommand.CommandName}");
                     if (Tasks.IsCompleted(whenTasks, debug))
                     {
@@ -233,6 +240,17 @@ namespace IngameScript
                     _checkIndex++;
                 }
             }
+            else
+            {
+                _conditionCommand = null;
+                _checkIndex = 0;
+            }
+        }
+
+
+        void AdvancedEchoReset()
+        {
+            _momento = DateTime.Now;
         }
 
         void AdvancedEcho(string message, bool append = false)
@@ -246,7 +264,7 @@ namespace IngameScript
                 builder.Append(value);
                 message = builder.ToString();
             }
-            Echo(message);
+            Echo($"| Elapsed {(DateTime.Now - _momento).TotalMilliseconds:00}ms | {message}");
             if (DEBUG_IN_SCREEN)
             {
                 var displays = DisplayHelper.GetTextSurfaces(new[] { Me });

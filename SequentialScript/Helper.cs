@@ -68,6 +68,51 @@ namespace IngameScript
             return color.Value;
         }
 
+        /// <summary>
+        /// Returns a dictionary of <see cref="IMyTerminalBlock"/> by block names or block group names.
+        /// </summary>
+        /// <param name="blockNames">List of block names and block group names.</param>
+        /// <param name="blockList">List of blocks.</param>
+        /// <param name="blockGroup">List of block groups.</param>
+        /// <exception cref="KeyNotFoundException">Block name or group name not found.</exception>
+        /// <remarks>
+        /// If name is between asteristks it will try to find in <paramref name="blockGroup"/> list, else, it will try to find it in <paramref name="blockList"/>. 
+        /// </remarks>
+        public static IDictionary<string, IEnumerable<IMyTerminalBlock>> CreateBlockDictionary(IEnumerable<string> blockNames, IEnumerable<IMyTerminalBlock> blockList, IEnumerable<IMyBlockGroup> blockGroup)
+        {
+            var result = new Dictionary<string, IEnumerable<IMyTerminalBlock>>(StringComparer.OrdinalIgnoreCase);
+            IEnumerable<IMyTerminalBlock> blocks;
+
+            foreach (var blockName in blockNames)
+            {
+                if (!result.TryGetValue(blockName, out blocks))
+                {
+                    if (blockName.StartsWith("*") && blockName.EndsWith("*"))
+                    {
+                        var groups = blockGroup.Where(x => x.Name.Equals(blockName.Substring(1, blockName.Length - 2), StringComparison.OrdinalIgnoreCase));
+
+                        // Groups are between "*", but if it has not been found, it will check in block list.
+                        if (groups.Any())
+                        {
+                            blocks = groups.SelectMany(group => group.GetBlocks());
+                        }
+                    }
+                    if (blocks == null)
+                    {
+                        blocks = blockList.Where(x => x.DisplayNameText.Equals(blockName, StringComparison.OrdinalIgnoreCase));
+                    }
+                    if (blocks.Any())
+                    {
+                        result.Add(blockName, blocks.ToArray());
+                    }
+                    else
+                    {
+                        throw new KeyNotFoundException($"No blocks found with name '{blockName}'.");
+                    }
+                }
+            }
+            return result;
+        }
 
     }
 }

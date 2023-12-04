@@ -7,6 +7,7 @@
     - [Argumens](#arguments)
     - [Comments](#comments)
 - [Action list](#action-list)
+- [Known issues](#known-issues)
 - Examples
     - [Hydrogen charger](Examples_Hydrogen_Charger.md)
     - [Pressurized Door](Examples_Pressurized_Door.md)
@@ -247,3 +248,11 @@ Space Engineers uses RGB option ingame:
 ![Ingame color RGB](ingame_color_rgb.png)
 
 **Warning:** due of Space Engineers limitations, some colors may not display properly. The best way to choose a color is testing it ingame before.
+
+## Known issues
+
+**Issue 1**
+
+Script execution terminated, script is too complex. Please edit and rebuild script.
+
+Occurs when the command has too many instructions.

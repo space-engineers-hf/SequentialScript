@@ -50,7 +50,7 @@ namespace IngameScript
         /// <param name="grid">The <see cref="IMyBlockGroup"/> where all the blocks are placed.</param>
         /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
-        public static IEnumerable<Task> CreateTasks(IEnumerable<InstructionBlock> instructions, IEnumerable<IMyTerminalBlock> blockList, IEnumerable<IMyBlockGroup> blockGroup)
+        public static IEnumerable<Task> CreateTasks(IEnumerable<InstructionBlock> instructions, IDictionary<string, IEnumerable<IMyTerminalBlock>> blockDictionary)
         {
             var result = new List<Task>();
 
@@ -63,21 +63,7 @@ namespace IngameScript
                     IEnumerable<IMyTerminalBlock> blocks = null;
 
                     // Try get blocks.
-                    if (instruction.BlockName.StartsWith("*") && instruction.BlockName.EndsWith("*"))
-                    {
-                        var groups = blockGroup.Where(x => x.Name.Equals(instruction.BlockName.Substring(1, instruction.BlockName.Length - 2), StringComparison.OrdinalIgnoreCase));
-
-                        // Groups are between "*", but if it has not been found, it will check in block list.
-                        if (groups.Any())
-                        {
-                            blocks = groups.SelectMany(group => group.GetBlocks());
-                        }
-                    }
-                    if (blocks == null)
-                    {
-                        blocks = blockList.Where(x => x.DisplayNameText.Equals(instruction.BlockName, StringComparison.OrdinalIgnoreCase));
-                    }
-                    if (blocks.Any())
+                    if (blockDictionary.TryGetValue(instruction.BlockName, out blocks))
                     {
                         foreach (var block in blocks)
                         {
@@ -104,7 +90,14 @@ namespace IngameScript
                             }
 
                             // Add action.
-                            actions.Add(new TaskAction { Block = block, ActionProfile = ActionProfiles.GetActionProfile(block, instruction.ActionName), Arguments = instruction.Arguments, Check = check, Wait = wait });
+                            actions.Add(new TaskAction
+                            {
+                                Block = block,
+                                ActionProfile = ActionProfiles.GetActionProfile(block, instruction.ActionName),
+                                Arguments = instruction.Arguments,
+                                Check = check,
+                                Wait = wait
+                            });
                         }
                     }
                     else
