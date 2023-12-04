@@ -16,7 +16,7 @@
 
 ## About
 
-It allows creating complex sequences that typically require **multiple timer blocks** by using **only one programming block** and writing some instructions in its "Custom Data" section.
+This script allows creating complex sequences that typically require **multiple timer blocks** by using **only one programming block** and writing some instructions in its "Custom Data" section.
 
 For example, it is possible to command button that depressurize the room before open the door.
 
@@ -87,7 +87,7 @@ An **instruction block** enters in finished state when all the instructions have
 
 ![Instruction Block Done](sequence_example_done.png)
 
-All **instruction blocks** must have an *alias*. This alias can be used for other **instruction blocks** to force them to wait until this one has finished.
+All **instruction blocks** must have an *alias*. This alias can be used for other **instruction blocks** to set that it cannot start until this one has finished.
 
 Use the clausule *when* to set a **instruction block** wait until one or more **instruction blocks** have finished. 
 ```
@@ -161,14 +161,44 @@ as @groupE
 ![Sequence Example Mix](sequence_example_mix.png)
 
 ### Arguments
-Some actions can have arguments. Those Arguments are defined in the [action list](#action-list).
+Actions can have arguments
 ```
-when @previous_action1, @previous_action2
 run
- Block name 1 -> Action /NoCheck /Argument1 /Argument2:MyValue /Argument3:"My value with spaces"
- Block name 2 -> Action /NoCheck /Argument1 /Argument2:MyValue /Argument3:"My value with spaces"
+ Block -> Action /Argument1 /Argument2:MyValue /Argument3:"My value with spaces"
 as @action_block
 ```
+
+#### NoWait
+Sometimes it is not necessary that an action ends to consider that the **instruction block** has finished. In those cases, it is possible to set "/NoWait" argument:
+```
+when @previous_instruction_block
+run
+ Block 1 -> Action A
+ Block 2 -> Action B /NoWait
+ *Block group* -> Action C
+as @instruction_block
+```
+
+![Instruction Block NoWait](sequence_example_done_nowait.png)
+
+#### Wait
+In a similar way, it is possible to set the maximun time (in milliseconds) that the action must wait to consider that is has finished. If the actions ends before, then it will be taken in consideration, else, it will be ignored.
+
+The following example waits that the block has depressurized up to 3 seconds. If the room needs 1 second to depressurize, the door will opens in that moment, but if the room needs more than 3 seconds, the door will open anyway when time expires.
+```
+run
+ Air Vent 1 -> Depressurize /Wait:3000
+as @room_depressurized
+
+when @room_depressurized
+run
+ Door 1 --> Open
+as @done
+```
+
+#### Custom-defined arguments by action
+Some actions have their own arguments. Those arguments are defined in the [action list](#action-list).
+
 
 ### Comments
 
@@ -216,7 +246,7 @@ as @done
 | Sound block / Jukebox         | Play                   | Starts sound                                                     | Immediately                                                                                      |                       |                                                                      |
 |                               | Stop                   | Stops sound                                                      | Immediately                                                                                      |                       |                                                                      |
 | Timer block                   | Start                  | Begins timer countdown                                           | Timer countdown ends                                                                             |                       |                                                                      |
-|                               | Stop                   | Stops current timer countdown                                    | Timer countdown ends                                                                             |                       |                                                                      |
+|                               | Stop                   | Stops current timer countdown                                    | Timer countdown stops                                                                            |                       |                                                                      |
 |                               | Trigger                | Triggers timer inmediatelly, skips<br>countdown                  | Immediately                                                                                      |                       |                                                                      |
 | Programmable block            | Run                    |                                                                  | Programable block ends running                                                                   |                       |                                                                      |
 | Battery                       | Recharge               |                                                                  |                                                                                                  |                       |                                                                      |
@@ -230,6 +260,13 @@ as @done
 |                               |                        |                                                                  |                                                                                                  | /COLOR:\<color\>      | Sets the text color of the display<br>See [color](#color) type       |
 |                               |                        |                                                                  |                                                                                                  | /TEXT:\<string>       | Sets the text to show in the display                                 |
 
+**Trick:** If there are some action that is not in the *action list*, is is possible to use a timer block. Build a timer block, add the action (or actions) and run it using the following sentence. This will run the timer block actions when the previous **instruction block** has finished.
+```
+when @previous_instruction_block
+run
+ My Timer Block -> Trigger
+as @instruction_block
+```
 
 ## Color
 Some actions allows to change the color (for example lights and LCDs).
@@ -253,6 +290,6 @@ Space Engineers uses RGB option ingame:
 
 **Issue 1**
 
-Script execution terminated, script is too complex. Please edit and rebuild script.
+*Message:* Script execution terminated, script is too complex. Please edit and rebuild script.
 
-Occurs when the command has too many instructions.
+*Description:* Occurs when the command has too many instructions.
