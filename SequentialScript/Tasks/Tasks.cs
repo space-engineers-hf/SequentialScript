@@ -175,7 +175,7 @@ namespace IngameScript
             bool result;
 
             debug?.AppendLine("Checking:");
-            result = tasks.All(task => task.Actions.All(action => IsDone(task, TaskStatusMode.Condition, null, debug)));
+            result = IsDone(GetLastActions(tasks), TaskStatusMode.Condition, null, debug);
             debug?.AppendLine($"Result: {result}");
             return result;
         }
@@ -220,7 +220,15 @@ namespace IngameScript
         /// </summary>
         private static bool IsDone(Task task, TaskStatusMode mode, DateTime? momento = null, StringBuilder debug = null)
         {
-            return task.Actions.All(action =>
+            return IsDone(task.Actions, mode, momento, debug);
+        }
+
+        /// <summary>
+        /// Checks if all <see cref="TaskAction"/> have been completed.
+        /// </summary>
+        private static bool IsDone(IEnumerable<TaskAction> actions, TaskStatusMode mode, DateTime? momento = null, StringBuilder debug = null)
+        {
+            return actions.All(action =>
             {
                 bool isCompleted = false;
                 bool printDebug = false;
@@ -229,13 +237,10 @@ namespace IngameScript
                 switch (mode)
                 {
                     case TaskStatusMode.Condition:
-                        // All conditions are ignored excepting those with '/check' argument.
-                        if (action.Check)
+                        // Condition wait is ignored.
+                        if (action.Wait > -1)
                         {
-                            sufixDebug = $"(check)";
-                        }
-                        else
-                        {
+                            sufixDebug = $"(wait:{action.Wait})";
                             isCompleted = true;
                             printDebug = false;
                         }
@@ -245,25 +250,66 @@ namespace IngameScript
                         if (action.Wait == 0) // No wait.
                         {
                             isCompleted = true;
+                            sufixDebug = $"(wait:{action.Wait})";
                         }
                         else if (action.Wait > -1) // -1 wait until done
                         {
                             isCompleted = (action.StartTime != null && (((momento ?? DateTime.UtcNow) - action.StartTime.Value).TotalMilliseconds > action.Wait)); // Wait for maximun...
+                            sufixDebug = $"(wait:{action.Wait})";
                         }
                         printDebug = true;
-                        sufixDebug = $"(Wait:{action.Wait})";
                         break;
 
                     default:
                         break;
                 }
                 isCompleted |= action.ActionProfile.IsCompleteCallback(action.Block, action.Arguments);
-                if (printDebug)
+                if (printDebug && !isCompleted)
                 {
-                    debug?.AppendLine($"  - {action.Block.DisplayNameText}.{action.ActionProfile.ActionNames.First()} = {isCompleted} {sufixDebug} {action.StartTime}");
+                    var isCompletedText = (isCompleted ? "Done" : "Pending");
+                    var actionDebug = action.ActionProfile.GetCompletionDetails(action.Block, action.Arguments);
+
+                    if (!string.IsNullOrWhiteSpace(actionDebug))
+                    {
+                        sufixDebug += $" ({actionDebug})";
+                    }
+                    debug?.AppendLine($"  - {action.Block.DisplayNameText}.{action.ActionProfile.ActionNames.First()} ({isCompletedText})");
+                    debug?.AppendLine($"    {sufixDebug?.Trim()} {action.StartTime?.ToString("HH:mm:ss")}");
                 }
                 return isCompleted;
             });
+        }
+
+        /// <summary>
+        /// Returns the last action for each block taking in mind the running sequence.
+        /// </summary>
+        /// <param name="tasks">List of instruction blocks.</param>
+        public static IEnumerable<TaskAction> GetLastActions(this IEnumerable<Task> tasks)
+        {
+            var actionDictionary = new Dictionary<string, TaskAction>(StringComparer.OrdinalIgnoreCase);
+            var validatedTasks = new List<Task>(); // All tasks already validated.
+            IEnumerable<Task> validationTasks; // Tasks to validate for each iteration.
+            var i = 0;
+
+            validationTasks = tasks.Where(x => !x.PreviousTasks.Any()); // Start with tasks without parents.
+            while (validationTasks.Any())
+            {
+                // Get all tasks and save its actions in the dictionary.
+                foreach (var task in validationTasks)
+                {
+                    foreach (var action in task.Actions)
+                    {
+                        actionDictionary[$"{action.Block.EntityId}\t{action.ActionProfile.GroupName}"] = action;
+                    }
+                    validatedTasks.Add(task);
+                }
+                // Get tasks pending to validate whose previous tasks are already validated.
+                validationTasks = tasks
+                    .Except(validatedTasks)
+                    .Where(t => t.PreviousTasks.All(x => validatedTasks.Contains(x)));
+                i++;
+            }
+            return actionDictionary.Values;
         }
 
     }

@@ -43,16 +43,6 @@ namespace IngameScript
             Runtime.UpdateFrequency = UpdateFrequency.None;
         }
 
-        public void Save()
-        {
-            // Called when the program needs to save its state. Use
-            // this method to save your state to the Storage field
-            // or some other means. 
-            // 
-            // This method is optional and can be removed if not
-            // needed.
-        }
-
         public void Main(string argument, UpdateType updateSource)
         {
             AdvancedEchoReset();
@@ -68,9 +58,9 @@ namespace IngameScript
                     {
                         IEnumerable<Task> thenTasks;
 
-                        AdvancedEcho($"Running {_command.CommandName}");
+                        AdvancedEcho($"Running {_command.CommandName}", append: true);
                         thenTasks = Tasks.CreateTasks(_command.Body, _blocksDictionary);
-                        StartTasks(thenTasks, $"{debug}\nStarted.");
+                        StartTasks(thenTasks, $"{debug}\nStarted.", appendMessage: true);
                     }
                     else if (_tasks != null)
                     {
@@ -79,21 +69,21 @@ namespace IngameScript
                         tasksRunning = _tasks.Run(debug);
                         if (tasksRunning.Any())
                         {
-                            AdvancedEcho($"{debug}");
-                            AdvancedEcho($"Running tasks: {(DateTime.UtcNow - now).TotalMilliseconds:N0}", true);
+                            AdvancedEcho($"{debug}", append: true);
+                            AdvancedEcho($"Running tasks: {(DateTime.UtcNow - now).TotalMilliseconds:N0}", append: true);
                         }
                         else
                         {
                             // Finish cycle.
                             _tasks = null;
                             Runtime.UpdateFrequency = UpdateFrequency.None;
-                            AdvancedEcho("Done.", true);
+                            AdvancedEcho("Done.", append: true);
                         }
                     }
                     else if (_conditionCommand != null)
                     {
                         CheckNextCondition();
-                        AdvancedEcho($"Condition command: {(DateTime.UtcNow - now).TotalMilliseconds:N0}", true);
+                        AdvancedEcho($"Condition command: {(DateTime.UtcNow - now).TotalMilliseconds:N0}", append: true);
                     }
                     else
                     {
@@ -126,11 +116,11 @@ namespace IngameScript
                         _blocksDictionary = Helper.CreateBlockDictionary(blockNames, GridTerminalSystem.GetBlocks(), GridTerminalSystem.GetBlockGroups());
                         if (command is InstructionCommand)
                         {
-                            StartCommand((InstructionCommand)command);
+                            StartCommand((InstructionCommand)command, $"Command '{command.CommandName}' started.");
                         }
                         else if (command is ConditionCommandInstruction)
                         {
-                            StartCheck((ConditionCommandInstruction)command);
+                            StartCheck((ConditionCommandInstruction)command, $"Checking condition '{command.CommandName}'...");
                         }
                     }
                     else
@@ -145,8 +135,11 @@ namespace IngameScript
             }
         }
 
-
-        void StartCommand(InstructionCommand command, string message = "Command started.")
+        /// <summary>
+        /// Starts a command.
+        /// </summary>
+        /// <param name="message">Message for the echo output.</param>
+        void StartCommand(InstructionCommand command, string message = "Command started.", bool appendMessage = false)
         {
             _command = command;
             _tasks = null;
@@ -155,15 +148,14 @@ namespace IngameScript
             Runtime.UpdateFrequency = UPDATE_FREQUENCY;
             ticks = 1;
 
-            AdvancedEcho(message);
+            AdvancedEcho(message, appendMessage);
         }
 
         /// <summary>
         /// Starts tasks.
         /// </summary>
-        /// <param name="tasks"></param>
-        /// <param name="message"></param>
-        void StartTasks(IEnumerable<Task> tasks, string message = "Started.")
+        /// <param name="message">Message for the echo output.</param>
+        void StartTasks(IEnumerable<Task> tasks, string message = "Task started.", bool appendMessage = false)
         {
             _command = null;
             _tasks = tasks;
@@ -171,16 +163,15 @@ namespace IngameScript
             Runtime.UpdateFrequency = UPDATE_FREQUENCY;
             ticks = 1;
 
-            AdvancedEcho(message);
+            AdvancedEcho(message, appendMessage);
         }
 
 
         /// <summary>
         /// Starts to check a condition command.
         /// </summary>
-        /// <param name="conditionCommand"></param>
-        /// <param name="message"></param>
-        void StartCheck(ConditionCommandInstruction conditionCommand, string message = "")
+        /// <param name="message">Message for the echo output.</param>
+        void StartCheck(ConditionCommandInstruction conditionCommand, string message = "Checking condition...", bool appendMessage = false)
         {
             _command = null;
             _tasks = null;
@@ -189,7 +180,7 @@ namespace IngameScript
             Runtime.UpdateFrequency = UPDATE_FREQUENCY;
             ticks = 1;
 
-            AdvancedEcho(message);
+            AdvancedEcho(message, appendMessage);
         }
 
         /// <summary>
@@ -205,12 +196,12 @@ namespace IngameScript
 
                 var condition = _conditionCommand.Body[_checkIndex];
 
-                debug.AppendLine($"{_checkIndex}");
+                debug.AppendLine($"Index condition: {_checkIndex}");
 
                 // Check positive condition.
                 if (string.IsNullOrEmpty(condition.When))
                 {
-                    debug.AppendLine($"ELSE");
+                    debug.AppendLine($"Condition name: ELSE");
                     positive = true; // 'else' condition.
                 }
                 else
@@ -219,13 +210,15 @@ namespace IngameScript
                     IEnumerable<Task> whenTasks;
 
                     whenCommand = (InstructionCommand)_commands[condition.When];
+                    debug.AppendLine($"Condition name: {whenCommand.CommandName}");
+
                     whenTasks = Tasks.CreateTasks(whenCommand.Body, _blocksDictionary);
-                    debug.AppendLine($"{whenCommand.CommandName}");
                     if (Tasks.IsCompleted(whenTasks, debug))
                     {
                         positive = true;
                     }
                 }
+                AdvancedEcho(debug.ToString(), true);
 
                 if (positive)
                 {
@@ -233,7 +226,7 @@ namespace IngameScript
 
                     // TODO: Multiple tasks.
                     thenCommand = (InstructionCommand)_commands[condition.Then.Single()];
-                    StartCommand(thenCommand);
+                    StartCommand(thenCommand, $"Command started: {thenCommand.CommandName}.", appendMessage: true);
                 }
                 else
                 {
@@ -264,7 +257,9 @@ namespace IngameScript
                 builder.Append(value);
                 message = builder.ToString();
             }
-            Echo($"| Elapsed {(DateTime.Now - _momento).TotalMilliseconds:00}ms | {message}");
+            message = $"| Elapsed {(DateTime.Now - _momento).TotalMilliseconds:00}ms |\n{message}";
+
+            Echo(message);
             if (DEBUG_IN_SCREEN)
             {
                 var displays = DisplayHelper.GetTextSurfaces(new[] { Me });

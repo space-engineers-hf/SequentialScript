@@ -24,8 +24,11 @@ namespace IngameScript
     {
 
         public abstract IEnumerable<string> ActionNames { get; }
+        public virtual string GroupName => ActionNames.First();
         public abstract Action<TMyTerminalBlock, IDictionary<string, string>> OnActionCallback { get; }
         public abstract Func<TMyTerminalBlock, IDictionary<string, string>, bool> IsCompleteCallback { get; }
+        protected virtual string GetCompletionDetails(TMyTerminalBlock block, IDictionary<string, string> arguments)
+            => null;
 
 
         Action<IMyTerminalBlock, IDictionary<string, string>> IActionProfile.OnActionCallback =>
@@ -33,6 +36,10 @@ namespace IngameScript
 
         Func<IMyTerminalBlock, IDictionary<string, string>, bool> IActionProfile.IsCompleteCallback =>
             (block, args) => IsCompleteCallback(GetMyTerminalBlock(block), args);
+
+        string IActionProfile.GetCompletionDetails(IMyTerminalBlock block, IDictionary<string, string> arguments)
+            => GetCompletionDetails(GetMyTerminalBlock(block), arguments);
+
 
         bool IActionProfile.IsAssignableFrom(IMyTerminalBlock block)
             => (block is TMyTerminalBlock);

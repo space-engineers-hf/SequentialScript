@@ -24,6 +24,7 @@ namespace IngameScript
     {
 
         public override IEnumerable<string> ActionNames => new[] { "Lock", "Connect" };
+        public override string GroupName => "Status";
 
         public override Action<IMyShipConnector, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.Connect();

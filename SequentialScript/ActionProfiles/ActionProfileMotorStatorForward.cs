@@ -24,6 +24,7 @@ namespace IngameScript
     {
 
         public override IEnumerable<string> ActionNames => new[] { "Forward" };
+        public override string GroupName => "Direction";
 
         public override Action<IMyMotorStator, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.TargetVelocityRPM = Math.Abs(block.TargetVelocityRPM);

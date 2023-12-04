@@ -24,6 +24,7 @@ namespace IngameScript
     {
 
         public override IEnumerable<string> ActionNames => new[] { "Stop" };
+        public override string GroupName => "Play";
 
         public override Action<IMySoundBlock, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.Stop();

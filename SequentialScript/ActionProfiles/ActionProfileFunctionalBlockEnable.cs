@@ -24,6 +24,7 @@ namespace IngameScript
     {
 
         public override IEnumerable<string> ActionNames => new[] { "Enable", "On" };
+        public override string GroupName => "OnOff";
 
         public override Action<IMyFunctionalBlock, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.Enabled = true;

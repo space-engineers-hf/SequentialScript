@@ -24,6 +24,7 @@ namespace IngameScript
     {
 
         public override IEnumerable<string> ActionNames => new[] { "Open" };
+        public override string GroupName => "Status";
 
         public override Action<IMyDoor, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.OpenDoor();

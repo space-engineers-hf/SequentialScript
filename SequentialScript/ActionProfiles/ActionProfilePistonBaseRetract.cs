@@ -24,11 +24,16 @@ namespace IngameScript
     {
 
         public override IEnumerable<string> ActionNames => new[] { "Retract" };
+        public override string GroupName => "Direction";
 
         public override Action<IMyPistonBase, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.Retract();
 
         public override Func<IMyPistonBase, IDictionary<string, string>, bool> IsCompleteCallback =>
-            (block, args) => block.Status == PistonStatus.Retracted;
+            (block, args) => block.Status == PistonStatus.Retracted || (block.CurrentPosition - block.MinLimit) < 0.05;
+
+        protected override string GetCompletionDetails(IMyPistonBase block, IDictionary<string, string> arguments)
+            => $"Position: {block.CurrentPosition:N2} ({(block.CurrentPosition - block.MinLimit):N2}); Status: {block.Status}";
+
     }
 }

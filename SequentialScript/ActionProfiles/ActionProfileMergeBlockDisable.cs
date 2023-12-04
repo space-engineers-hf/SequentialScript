@@ -24,6 +24,7 @@ namespace IngameScript
     {
 
         public override IEnumerable<string> ActionNames => new[] { "Disable", "Off", "Unlock" };
+        public override string GroupName => "State";
 
         public override Action<IMyShipMergeBlock, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.Enabled = false;

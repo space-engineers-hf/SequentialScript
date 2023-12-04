@@ -24,6 +24,7 @@ namespace IngameScript
     {
 
         public override IEnumerable<string> ActionNames => new[] { "Stockpile" };
+        public override string GroupName => "Stockpile";
 
         public override Action<IMyGasTank, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.Stockpile = true;

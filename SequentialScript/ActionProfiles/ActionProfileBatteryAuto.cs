@@ -24,6 +24,7 @@ namespace IngameScript
     {
 
         public override IEnumerable<string> ActionNames => new[] { "Auto" };
+        public override string GroupName => "ChargeMode";
 
         public override Action<IMyBatteryBlock, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.ChargeMode = ChargeMode.Auto;

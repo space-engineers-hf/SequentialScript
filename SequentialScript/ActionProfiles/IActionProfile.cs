@@ -24,8 +24,11 @@ namespace IngameScript
     {
 
         IEnumerable<string> ActionNames { get; }
+        string GroupName { get; }
         Action<IMyTerminalBlock, IDictionary<string, string>> OnActionCallback { get; }
         Func<IMyTerminalBlock, IDictionary<string, string>, bool> IsCompleteCallback { get; }
+        string GetCompletionDetails(IMyTerminalBlock block, IDictionary<string, string> arguments);
+        
         bool IsAssignableFrom(IMyTerminalBlock block);
 
     }

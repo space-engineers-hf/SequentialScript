@@ -24,6 +24,7 @@ namespace IngameScript
     {
 
         public override IEnumerable<string> ActionNames => new[] { "Pressurize" };
+        public override string GroupName => "Pressurization";
 
         public override Action<IMyAirVent, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.Depressurize = false;

@@ -24,6 +24,7 @@ namespace IngameScript
     {
 
         public override IEnumerable<string> ActionNames => new[] { "Start" };
+        public override string GroupName => "Status";
 
         public override Action<IMyTimerBlock, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.StartCountdown();

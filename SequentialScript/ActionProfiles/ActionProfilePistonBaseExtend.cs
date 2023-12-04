@@ -24,11 +24,16 @@ namespace IngameScript
     {
 
         public override IEnumerable<string> ActionNames => new[] { "Extend" };
+        public override string GroupName => "Direction";
 
         public override Action<IMyPistonBase, IDictionary<string, string>> OnActionCallback =>
             (block, args) => block.Extend();
 
         public override Func<IMyPistonBase, IDictionary<string, string>, bool> IsCompleteCallback =>
-            (block, args) => block.Status == PistonStatus.Extended;
+            (block, args) => block.Status == PistonStatus.Extended || (block.MaxLimit - block.CurrentPosition) < 0.05;
+
+        protected override string GetCompletionDetails(IMyPistonBase block, IDictionary<string, string> arguments)
+            => $"Position: {block.CurrentPosition:N2} ({(block.MaxLimit - block.CurrentPosition):N2}); Status: {block.Status}";
+
     }
 }
