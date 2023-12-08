@@ -24,10 +24,13 @@ namespace IngameScript
     partial class Program : MyGridProgram
     {
 
+        #region mdk preserve
+
         static readonly bool DEBUG_IN_SCREEN = false;
         static readonly UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update10; // Update1, Update10, Update100
         static readonly int UPDATE_TICKS = 0; // Very slow mode multiplier (for debug)
 
+        #endregion
 
         DateTime _momento;
         IDictionary<string, IEnumerable<IMyTerminalBlock>> _blocksDictionary;
@@ -77,7 +80,7 @@ namespace IngameScript
                             // Finish cycle.
                             _tasks = null;
                             Runtime.UpdateFrequency = UpdateFrequency.None;
-                            AdvancedEcho("Done.", append: true);
+                            AdvancedEcho("Done.");
                         }
                     }
                     else if (_conditionCommand != null)
