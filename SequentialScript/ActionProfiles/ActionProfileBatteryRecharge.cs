@@ -30,7 +30,7 @@ namespace IngameScript
             (block, args) => block.ChargeMode = ChargeMode.Recharge;
 
         public override Func<IMyBatteryBlock, IDictionary<string, string>, bool> IsCompleteCallback =>
-            (block, args) => (block.ChargeMode == ChargeMode.Recharge && !block.IsCharging);
+            (block, args) => (block.ChargeMode == ChargeMode.Recharge && block.CurrentStoredPower == block.MaxStoredPower);
 
     }
 }
