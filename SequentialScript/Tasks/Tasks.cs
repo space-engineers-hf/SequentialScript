@@ -80,6 +80,13 @@ namespace IngameScript
                                     throw new FormatException($"'/MAXWAIT' must have a numeric value.");
                                 }
                             }
+                            else if (instruction.Arguments.TryGetValue("WAIT", out argumentValue))
+                            {
+                                if (string.IsNullOrWhiteSpace(argumentValue) || !int.TryParse(argumentValue, out wait))
+                                {
+                                    throw new FormatException($"'/WAIT' must have a numeric value.");
+                                }
+                            }
                             else if (instruction.Arguments.TryGetValue("NOWAIT", out argumentValue) && (string.IsNullOrWhiteSpace(argumentValue) || argumentValue.Equals("true", StringComparison.OrdinalIgnoreCase)))
                             {
                                 wait = 0;
@@ -255,8 +262,8 @@ namespace IngameScript
                         else if (action.Wait > -1) // -1 wait until done
                         {
                             isCompleted = (action.StartTime != null && (((momento ?? DateTime.UtcNow) - action.StartTime.Value).TotalMilliseconds > action.Wait)); // Wait for maximun...
-                            sufixDebug = $"(wait:{action.Wait})";
                         }
+                        sufixDebug = $"(wait:{action.Wait})";
                         printDebug = true;
                         break;
 
