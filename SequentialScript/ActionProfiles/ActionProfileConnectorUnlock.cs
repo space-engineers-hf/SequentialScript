@@ -30,7 +30,19 @@ namespace IngameScript
             (block, args) => block.Disconnect();
 
         public override Func<IMyShipConnector, IDictionary<string, string>, bool> IsCompleteCallback =>
-            (block, args) => block.Status != MyShipConnectorStatus.Connected;
+            (block, args) =>
+            {
+                bool result = true;
+                string value;
+
+                result = (block.Status != MyShipConnectorStatus.Connected);
+                if (args.TryGetValue("FULL", out value))
+                {
+                    result &= (block.Status == MyShipConnectorStatus.Unconnected);
+                }
+                return result;
+            };
+            
 
     }
 }
