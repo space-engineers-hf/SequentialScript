@@ -32,5 +32,8 @@ namespace IngameScript
         public override Func<IMyTimerBlock, IDictionary<string, string>, bool> IsCompleteCallback =>
             (block, args) => !block.IsCountingDown;
 
+        protected override string GetCompletionDetails(IMyTimerBlock block, IDictionary<string, string> arguments)
+            => $"Time: {TimeSpan.FromSeconds(block.TriggerDelay).ToString(@"hh\:mm\:ss")}";
+
     }
 }
