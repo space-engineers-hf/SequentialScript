@@ -27,20 +27,21 @@ namespace IngameScript
         {
             // Core actions first, especific block type actions last.
             new ActionProfileFunctionalBlockEnable(), new ActionProfileFunctionalBlockDisable(),
-            new ActionProfilePistonBaseExtend(), new ActionProfilePistonBaseRetract(),
+            new ActionProfilePistonBaseExtend(), new ActionProfilePistonBaseRetract(), new ActionProfilePistonBaseReverse(), new ActionProfilePistonBaseSet(),
             new ActionProfileMergeBlockEnable(), new ActionProfileMergeBlockDisable(),
-            new ActionProfileDoorOpen(), new ActionProfileDoorClose(),
+            new ActionProfileDoorOpen(), new ActionProfileDoorClose(), new ActionProfileDoorToggle(),
             new ActionProfileAirVentPressurize(), new ActionProfileAirVentDepressurize(),
             new ActionProfileTimerStart(), new ActionProfileTimerStop(), new ActionProfileTimerTrigger(),
             new ActionProfileSoundPlay(), new ActionProfileSoundStop(),
-            new ActionProfileMotorStatorForward(), new ActionProfileMotorStatorBack(),
+            new ActionProfileMotorStatorForward(), new ActionProfileMotorStatorBack(), new ActionProfileMotorStatorDetach(), new ActionProfileMotorStatorSet(),
             new ActionProfileProgrammableBlockRun(),
             new ActionProfileBatteryAuto(), new ActionProfileBatteryRecharge(), new ActionProfileBatteryDischarge(),
             new ActionProfileConnectorLock(), new ActionProfileConnectorUnlock(),
             new ActionProfileLightSet(),
             new ActionProfileGasTankStockpile(), new ActionProfileGasTankAuto(),
             new ActionProfileLcdDisplay(),
-            new ActionProfileThrusterSet()
+            new ActionProfileThrusterSet(),
+            new ActionProfileWarheadArm(), new ActionProfileWarheadDisarm(), new ActionProfileWarheadDetonate(), new ActionProfileWarheadStart(), new ActionProfileWarheadStop(),
         };
 
         public static IActionProfile GetActionProfile(IMyTerminalBlock block, string action)
