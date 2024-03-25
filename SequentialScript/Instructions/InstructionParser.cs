@@ -189,6 +189,10 @@ namespace IngameScript
                             }
                             else
                             {
+                                if (alias.Equals("none", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    alias = $"Unnamed_{instructionBlocks.Count:00}";
+                                }
                                 instructionBlocks.Add(alias, new InstructionBlock
                                 {
                                     Alias = alias,
