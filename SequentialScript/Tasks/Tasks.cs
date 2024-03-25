@@ -180,9 +180,15 @@ namespace IngameScript
         public static bool IsCompleted(this IEnumerable<Task> tasks, StringBuilder debug = null)
         {
             bool result;
+            var checkActions = tasks.SelectMany(x => x.Actions).Where(x => x.Check);
 
             debug?.AppendLine("Checking:");
-            result = IsDone(GetLastActions(tasks), TaskStatusMode.Condition, null, debug);
+            if (!checkActions.Any())
+            {
+                // If there are some action with "check" argument, only check those, else, check last actions.
+                checkActions = GetLastActions(tasks);
+            }
+            result = IsDone(checkActions, TaskStatusMode.Condition, null, debug);
             debug?.AppendLine($"Result: {result}");
             return result;
         }
