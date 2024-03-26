@@ -24,7 +24,6 @@ namespace IngameScript
     {
 
         public string When { get; set; }
-
         public IEnumerable<string> Then { get; set; }
 
     }

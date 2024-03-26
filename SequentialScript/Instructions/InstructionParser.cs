@@ -86,129 +86,7 @@ namespace IngameScript
                 lineCount += GetLineCount(text, 0, bodyGroup.Index);
                 foreach (System.Text.RegularExpressions.Match bodyMatch in bodyMatches)
                 {
-                    int lineStart;
-
-                    try
-                    {
-                        lineCount += CheckSyntax(bodyContent, previousIndex + 1, bodyMatch.Index); // Search invalid strings from previous body match to new body match.
-                    }
-                    catch (SyntaxException ex)
-                    {
-                        throw new SyntaxException(ex.OriginalMessage, lineCount + ex.Line, ex.Pos, ex.InnerException);
-                    }
-                    lineStart = lineCount;
-                    lineCount += GetLineCount(bodyContent, bodyMatch.Index, bodyMatch.Length);
-
-                    var whenGroup = bodyMatch.Groups["when"]?.Value;
-                    var runGroup = bodyMatch.Groups["run"];
-                    var run = runGroup.Value;
-                    var aliasGroup = bodyMatch.Groups["var"];
-                    var alias = aliasGroup.Value.Trim();
-
-                    if (string.IsNullOrEmpty(alias) || !(alias == "none" || alias.StartsWith("@")))
-                    {
-                        throw new SyntaxException("Invalid text after 'as' clausule.",
-                            lineStart + GetLineCount(bodyContent, bodyMatch.Index, aliasGroup.Index - bodyMatch.Index)
-                        );
-                    }
-                    else if (instructionBlocks.ContainsKey(alias))
-                    {
-                        throw new SyntaxException($"'{alias}' has been declared several times.",
-                            lineStart + GetLineCount(bodyContent, bodyMatch.Index, aliasGroup.Index - bodyMatch.Index)
-                        );
-                    }
-                    else
-                    {
-                        var actions = run
-                            .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
-                            .Select(line => line.Trim())
-                            .Where(line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith("//")) // Ignore empty lines and comments.
-                            .Select((line, index) =>
-                            {
-                                // Remove comments
-                                var lineComments = line.Split(new[] { "//" }, StringSplitOptions.None);
-                                var lineWithoutComments = lineComments.First();
-
-                                // Take BlockName and ActionName
-                                var lineItems = lineWithoutComments.Trim().Split(new[] { "->" }, StringSplitOptions.RemoveEmptyEntries);
-                                string blockName = null, actionName = null;
-                                bool isValid;
-
-                                if (lineItems.Length > 0)
-                                {
-                                    blockName = lineItems[0].Trim();
-                                }
-                                if (lineItems.Length > 1)
-                                {
-                                    actionName = lineItems[1].Trim();
-                                }
-                                isValid = lineItems.Length == 2;
-
-                                // Arguments
-                                var arguments = GetArguments(actionName);
-
-                                return new
-                                {
-                                    Line = index + 1,
-                                    BlockName = blockName,
-                                    ActionName = arguments[""].Trim(),
-                                    Arguments = arguments.Where(x => !string.IsNullOrEmpty(x.Key)).ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase),
-                                    IsValid = isValid
-                                };
-                            })
-                        ;
-
-                        var invalid = actions.Where(x => !x.IsValid);
-                        if (invalid.Any())
-                        {
-                            throw new SyntaxException(
-                                $"Invalid sentence in '{alias}' for lines: {string.Join(",", invalid.Select(x => x.Line))}",
-                                lineStart + GetLineCount(bodyContent, bodyMatch.Index, runGroup.Index - bodyMatch.Index)
-                            );
-                        }
-                        else
-                        {
-                            var previousActionsMatch =
-                                whenGroup
-                                    .Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries)
-                                    .Select(x => x.Trim())
-                                    .GroupJoin(
-                                        instructionBlocks.Keys,
-                                        x => x,
-                                        y => $"@{y}",
-                                        (x, y) => new { Alias = x, Exists = y.Any(), IsValid = x.StartsWith("@") || x.Equals("none", StringComparison.OrdinalIgnoreCase) }
-                                    );
-
-                            if (previousActionsMatch.Any(x => !x.IsValid))
-                            {
-                                throw new FormatException(
-                                    $"Invalid syntax near to 'when' clausule in '{alias}' (line {lineStart}): " +
-                                    $"{string.Join(",", previousActionsMatch.Where(x => !x.IsValid).Select(x => $"{x.Alias}"))} is not valid.\n" +
-                                    $"Maybe you forgot the '@'."
-                                );
-                            }
-                            else
-                            {
-                                if (alias.Equals("none", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    alias = $"Unnamed_{instructionBlocks.Count:00}";
-                                }
-                                instructionBlocks.Add(alias, new InstructionBlock
-                                {
-                                    Alias = alias,
-                                    PreviousAlias = previousActionsMatch.Select(x => x.Alias),
-                                    Instructions = actions.Select(x => new Instruction
-                                    {
-                                        BlockName = x.BlockName,
-                                        ActionName = x.ActionName,
-                                        Arguments = x.Arguments,
-                                        IsValid = x.IsValid
-                                    })
-                                });
-                            }
-                        }
-                    }
-                    previousIndex = bodyMatch.Index + bodyMatch.Length;
+                    MatchBody(bodyMatch, instructionBlocks, bodyContent, ref previousIndex, ref lineCount);
                 }
 
                 // Search invalid strings from previous body match to the end of the string.
@@ -237,6 +115,137 @@ namespace IngameScript
             return result;
         }
 
+        internal static void MatchBody(
+            System.Text.RegularExpressions.Match bodyMatch,
+            IDictionary<string, InstructionBlock> instructionBlocks,
+            string bodyContent,
+            ref int previousIndex, ref int lineCount)
+        {
+            int lineStart;
+
+            try
+            {
+                lineCount += CheckSyntax(bodyContent, previousIndex + 1, bodyMatch.Index); // Search invalid strings from previous body match to new body match.
+            }
+            catch (SyntaxException ex)
+            {
+                throw new SyntaxException(ex.OriginalMessage, lineCount + ex.Line, ex.Pos, ex.InnerException);
+            }
+            lineStart = lineCount;
+            lineCount += GetLineCount(bodyContent, bodyMatch.Index, bodyMatch.Length);
+
+            var whenGroup = bodyMatch.Groups["when"]?.Value;
+            var runGroup = bodyMatch.Groups["run"];
+            var run = runGroup.Value;
+            var aliasGroup = bodyMatch.Groups["var"];
+            var alias = aliasGroup.Value.Trim();
+
+            if (string.IsNullOrEmpty(alias) || !(alias == "none" || alias.StartsWith("@")))
+            {
+                throw new SyntaxException("Invalid text after 'as' clausule.",
+                    lineStart + GetLineCount(bodyContent, bodyMatch.Index, aliasGroup.Index - bodyMatch.Index)
+                );
+            }
+            else if (instructionBlocks.ContainsKey(alias))
+            {
+                throw new SyntaxException($"'{alias}' has been declared several times.",
+                    lineStart + GetLineCount(bodyContent, bodyMatch.Index, aliasGroup.Index - bodyMatch.Index)
+                );
+            }
+            else
+            {
+                var actions = run
+                    .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(line => line.Trim())
+                    .Where(line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith("//")) // Ignore empty lines and comments.
+                    .Select((line, index) =>
+                    {
+                        // Remove comments
+                        var lineComments = line.Split(new[] { "//" }, StringSplitOptions.None);
+                        var lineWithoutComments = lineComments.First();
+
+                        // Take BlockName and ActionName
+                        var lineItems = lineWithoutComments.Trim().Split(new[] { "->" }, StringSplitOptions.RemoveEmptyEntries);
+                        string blockName = null, actionName = null;
+                        bool isValid;
+
+                        if (lineItems.Length > 0)
+                        {
+                            blockName = lineItems[0].Trim();
+                        }
+                        if (lineItems.Length > 1)
+                        {
+                            actionName = lineItems[1].Trim();
+                        }
+                        isValid = lineItems.Length == 2;
+
+                        // Arguments
+                        var arguments = GetArguments(actionName);
+
+                        return new
+                        {
+                            Line = index + 1,
+                            BlockName = blockName,
+                            ActionName = arguments[""].Trim(),
+                            Arguments = arguments.Where(x => !string.IsNullOrEmpty(x.Key)).ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase),
+                            IsValid = isValid
+                        };
+                    })
+                ;
+
+                var invalid = actions.Where(x => !x.IsValid);
+                if (invalid.Any())
+                {
+                    throw new SyntaxException(
+                        $"Invalid sentence in '{alias}' for lines: {string.Join(",", invalid.Select(x => x.Line))}",
+                        lineStart + GetLineCount(bodyContent, bodyMatch.Index, runGroup.Index - bodyMatch.Index)
+                    );
+                }
+                else
+                {
+                    var previousActionsMatch =
+                        whenGroup
+                            .Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(x => x.Trim())
+                            .GroupJoin(
+                                instructionBlocks.Keys,
+                                x => x,
+                                y => $"@{y}",
+                                (x, y) => new { Alias = x, Exists = y.Any(), IsValid = x.StartsWith("@") || x.Equals("none", StringComparison.OrdinalIgnoreCase) }
+                            );
+
+                    if (previousActionsMatch.Any(x => !x.IsValid))
+                    {
+                        throw new FormatException(
+                            $"Invalid syntax near to 'when' clausule in '{alias}' (line {lineStart}): " +
+                            $"{string.Join(",", previousActionsMatch.Where(x => !x.IsValid).Select(x => $"{x.Alias}"))} is not valid.\n" +
+                            $"Maybe you forgot the '@'."
+                        );
+                    }
+                    else
+                    {
+                        if (alias.Equals("none", StringComparison.OrdinalIgnoreCase))
+                        {
+                            alias = $"Unnamed_{instructionBlocks.Count:00}";
+                        }
+                        instructionBlocks.Add(alias, new InstructionBlock
+                        {
+                            Alias = alias,
+                            PreviousAlias = previousActionsMatch.Select(x => x.Alias),
+                            Instructions = actions.Select(x => new Instruction
+                            {
+                                BlockName = x.BlockName,
+                                ActionName = x.ActionName,
+                                Arguments = x.Arguments,
+                                IsValid = x.IsValid
+                            })
+                        });
+                    }
+                }
+            }
+            previousIndex = bodyMatch.Index + bodyMatch.Length;
+        }
+
         private static ConditionCommandInstruction CreateConditionCommand(System.Text.RegularExpressions.Match commandMatch)
         {
             ConditionCommandInstruction result = null;
@@ -253,76 +262,7 @@ namespace IngameScript
                 // Comprobar si se encontró una coincidencia
                 foreach (System.Text.RegularExpressions.Match match in bodyMatches)
                 {
-                    var clausule = match.Groups["clausule"].Value.Trim();
-                    var close = match.Groups["close"].Value.Trim();
-                    var condition = match.Groups["condition"].Value?.Trim();
-                    var body = match.Groups["body"].Value.Trim();
-
-                    if (clausule.Equals("if", StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (!ifCondition)
-                        {
-                            ifCondition = true;
-                        }
-                        else
-                        {
-                            throw new Exception($"Syntact incorrect near '{clausule}'.");
-                        }
-                    }
-                    if (!ifCondition)
-                    {
-                        throw new Exception($"Syntact incorrect near '{clausule}': 'if' condition not found.");
-                    }
-                    else if (clausule.Equals("else", StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (!elseCondition) // Else debe ser la última condición.
-                        {
-                            if (close.Equals("end", StringComparison.OrdinalIgnoreCase))
-                            {
-                                elseCondition = true;
-                            }
-                            else
-                            {
-                                throw new Exception($"Syntact incorrect near '{clausule}': 'end' clausule not found.");
-                            }
-                        }
-                        else
-                        {
-                            throw new Exception($"Syntact incorrect near '{clausule}': there are already other 'else' clausule.");
-                        }
-                    }
-                    else if (!condition.StartsWith("#"))
-                    {
-                        throw new Exception($"'{condition}' is not a valid command name becaue it does not start with '#' character.");
-                    }
-                    else
-                    {
-                        condition = condition.Substring(1);
-                    }
-
-                    instructionBlocks.Add(new ConditionBlockInstruction
-                    {
-                        When = condition,
-                        Then = body
-                                .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
-                                .Select(line => line.Trim().Split(new[] { "//" }, StringSplitOptions.RemoveEmptyEntries).First().Trim())
-                                .Where(line =>
-                                {
-                                    if (string.IsNullOrWhiteSpace(line) || line.StartsWith("//"))
-                                    {
-                                        return false;
-                                    }
-                                    else if (line.StartsWith("#"))
-                                    {
-                                        return true;
-                                    }
-                                    else
-                                    {
-                                        throw new Exception($"'{condition}' is not a valid command name becaue it does not start with '#' character.");
-                                    }
-                                }) // Ignore empty lines and comments.
-                                .Select(value => value.Substring(1))
-                    });
+                    MatchCondition(match, instructionBlocks, ref ifCondition, ref elseCondition);
                 }
 
                 // Insert command.
@@ -333,6 +273,83 @@ namespace IngameScript
                 };
             }
             return result;
+        }
+
+        internal static void MatchCondition(
+            System.Text.RegularExpressions.Match match,
+            List<ConditionBlockInstruction> instructionBlocks,
+            ref bool ifCondition, ref bool elseCondition)
+        {
+            var clausule = match.Groups["clausule"].Value.Trim();
+            var close = match.Groups["close"].Value.Trim();
+            var condition = match.Groups["condition"].Value?.Trim();
+            var body = match.Groups["body"].Value.Trim();
+
+            if (clausule.Equals("if", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!ifCondition)
+                {
+                    ifCondition = true;
+                }
+                else
+                {
+                    throw new Exception($"Syntact incorrect near '{clausule}'.");
+                }
+            }
+            if (!ifCondition)
+            {
+                throw new Exception($"Syntact incorrect near '{clausule}': 'if' condition not found.");
+            }
+            else if (clausule.Equals("else", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!elseCondition) // Else debe ser la última condición.
+                {
+                    if (close.Equals("end", StringComparison.OrdinalIgnoreCase))
+                    {
+                        elseCondition = true;
+                    }
+                    else
+                    {
+                        throw new Exception($"Syntact incorrect near '{clausule}': 'end' clausule not found.");
+                    }
+                }
+                else
+                {
+                    throw new Exception($"Syntact incorrect near '{clausule}': there are already other 'else' clausule.");
+                }
+            }
+            else if (!condition.StartsWith("#"))
+            {
+                throw new Exception($"'{condition}' is not a valid command name becaue it does not start with '#' character.");
+            }
+            else
+            {
+                condition = condition.Substring(1);
+            }
+
+            instructionBlocks.Add(new ConditionBlockInstruction
+            {
+                When = condition,
+                Then = body
+                        .Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(line => line.Trim().Split(new[] { "//" }, StringSplitOptions.RemoveEmptyEntries).First().Trim())
+                        .Where(line =>
+                        {
+                            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("//"))
+                            {
+                                return false;
+                            }
+                            else if (line.StartsWith("#"))
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                throw new Exception($"'{condition}' is not a valid command name becaue it does not start with '#' character.");
+                            }
+                        }) // Ignore empty lines and comments.
+                        .Select(value => value.Substring(1))
+            });
         }
 
         private static IDictionary<string, string> GetArguments(string value)
@@ -420,7 +437,7 @@ namespace IngameScript
         /// Checks if there are unknown instructions in the specific string range and returns the number of lines.
         /// </summary>
         /// <returns>Number of lines</returns>
-        private static int CheckSyntax(string content, int startIndex, int endIndex)
+        internal static int CheckSyntax(string content, int startIndex, int endIndex)
         {
             var substring = content.Substring(startIndex, endIndex - startIndex);
             var lines = substring.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None).Select(x => x.Trim());
@@ -480,7 +497,7 @@ namespace IngameScript
         /// <param name="path">This is a list for check cyclical references during recursive calls.</param>
         /// <exception cref="StackOverflowException">There are cyclical references.</exception>
         /// <exception cref="NullReferenceException">The <see cref="InstructionBlock.PreviousAlias"/> contains some <see cref="InstructionBlock.Alias"/> that has not been declared.</exception>
-        private static void CheckDependences(IDictionary<string, InstructionBlock> collection, InstructionBlock item, IEnumerable<string> path = null)
+        internal static void CheckDependences(IDictionary<string, InstructionBlock> collection, InstructionBlock item, IEnumerable<string> path = null)
         {
             string stringPath;
 
@@ -513,7 +530,7 @@ namespace IngameScript
             }
         }
 
-        private static void ValidateCommandDependences(IDictionary<string, ICommandInstruction> result)
+        internal static void ValidateCommandDependences(IDictionary<string, ICommandInstruction> result)
         {
             foreach (var instructionCommand in result.Values.OfType<ConditionCommandInstruction>())
             {

@@ -81,6 +81,7 @@ namespace IngameScript
         public static IDictionary<string, IEnumerable<IMyTerminalBlock>> CreateBlockDictionary(IEnumerable<string> blockNames, IEnumerable<IMyTerminalBlock> blockList, IEnumerable<IMyBlockGroup> blockGroup)
         {
             var result = new Dictionary<string, IEnumerable<IMyTerminalBlock>>(StringComparer.OrdinalIgnoreCase);
+            var blockDictionary = blockList.GroupBy(x => x.DisplayNameText, StringComparer.OrdinalIgnoreCase).ToDictionary(x => x.Key, x => x.AsEnumerable(), StringComparer.OrdinalIgnoreCase);
             IEnumerable<IMyTerminalBlock> blocks;
 
             foreach (var blockName in blockNames)
@@ -89,7 +90,8 @@ namespace IngameScript
                 {
                     if (blockName.StartsWith("*") && blockName.EndsWith("*"))
                     {
-                        var groups = blockGroup.Where(x => x.Name.Equals(blockName.Substring(1, blockName.Length - 2), StringComparison.OrdinalIgnoreCase));
+                        var realName = blockName.Substring(1, blockName.Length - 2);
+                        var groups = blockGroup.Where(x => x.Name.Equals(realName, StringComparison.OrdinalIgnoreCase));
 
                         // Groups are between "*", but if it has not been found, it will check in block list.
                         if (groups.Any())
@@ -99,7 +101,7 @@ namespace IngameScript
                     }
                     if (blocks == null)
                     {
-                        blocks = blockList.Where(x => x.DisplayNameText.Equals(blockName, StringComparison.OrdinalIgnoreCase));
+                        blockDictionary.TryGetValue(blockName, out blocks);
                     }
                     if (blocks.Any())
                     {

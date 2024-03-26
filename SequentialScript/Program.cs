@@ -33,6 +33,8 @@ namespace IngameScript
         #endregion
 
         DateTime _momento;
+        IList<IMyTerminalBlock> _terminalBlocks;
+        IList<IMyBlockGroup> _terminalGroups;
         IDictionary<string, IEnumerable<IMyTerminalBlock>> _blocksDictionary;
         IDictionary<string, ICommandInstruction> _commands;
         InstructionCommand _command;
@@ -57,7 +59,31 @@ namespace IngameScript
 
                 if (UPDATE_TICKS == 0 || ticks % UPDATE_TICKS == 0)
                 {
-                    if (_command != null)
+                    if (_terminalBlocks == null)
+                    {
+                        AdvancedEcho($"Getting terminal blocks", append: true);
+                        _terminalBlocks = GridTerminalSystem.GetBlocks();
+                        AdvancedEcho($" - OK", append: true);
+                    }
+                    else if (_terminalGroups == null)
+                    {
+                        AdvancedEcho($"Getting terminal groups", append: true);
+                        _terminalGroups = GridTerminalSystem.GetBlockGroups();
+                        AdvancedEcho($" - OK", append: true);
+                    }
+                    else if (_blocksDictionary == null)
+                    {
+                        var blockNames = _commands.Values
+                            .OfType<InstructionCommand>()
+                            .SelectMany(cmd => cmd.Body)
+                            .SelectMany(body => body.Instructions)
+                            .Select(instruction => instruction.BlockName);
+
+                        AdvancedEcho($"Building dictionary", append: true);
+                        _blocksDictionary = Helper.CreateBlockDictionary(blockNames, _terminalBlocks, _terminalGroups);
+                        AdvancedEcho($" - OK", append: true);
+                    }
+                    else if (_command != null)
                     {
                         IEnumerable<Task> thenTasks;
 
@@ -98,25 +124,23 @@ namespace IngameScript
             }
             else
             {
+                var debug = new StringBuilder();
                 ICommandInstruction command;
 
                 try
                 {
                     _tasks?.Cancel();
-                    _commands = InstructionParser.Parse(Me.CustomData);
+                    //_commands = InstructionParser.Parse(Me.CustomData);
+                    _commands = InstructionParserIterator.Create(Me.CustomData, 10000).Continue(debug);
                     if (string.IsNullOrWhiteSpace(argument))
                     {
                         // TODO: Compilar todo.
                     }
                     else if (_commands.TryGetValue(argument, out command))
                     {
-                        var blockNames = _commands.Values
-                            .OfType<InstructionCommand>()
-                            .SelectMany(cmd => cmd.Body)
-                            .SelectMany(body => body.Instructions)
-                            .Select(instruction => instruction.BlockName);
-
-                        _blocksDictionary = Helper.CreateBlockDictionary(blockNames, GridTerminalSystem.GetBlocks(), GridTerminalSystem.GetBlockGroups());
+                        _terminalBlocks = null;
+                        _terminalGroups = null;
+                        _blocksDictionary = null;
                         if (command is InstructionCommand)
                         {
                             StartCommand((InstructionCommand)command, $"Command '{command.CommandName}' started.");
@@ -133,7 +157,11 @@ namespace IngameScript
                 }
                 catch (Exception ex)
                 {
-                    AdvancedEcho($"ERROR: {ex.Message}");
+                    debug.AppendLine($"ERROR: {ex.Message}");
+                }
+                finally
+                {
+                    AdvancedEcho($"{debug}");
                 }
             }
         }

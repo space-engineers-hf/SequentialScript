@@ -87,6 +87,7 @@
     <Compile Include="Instructions\ICommandInstruction.cs" />
     <Compile Include="Instructions\ConditionCommandInstruction.cs" />
     <Compile Include="Instructions\InstructionParser.cs" />
+    <Compile Include="Instructions\InstructionParserIterator.cs" />
     <Compile Include="Instructions\SyntaxException.cs" />
     <Compile Include="MDK\Bootstrapper.cs" />
     <AdditionalFiles Include="MDK\MDK.options.props">
