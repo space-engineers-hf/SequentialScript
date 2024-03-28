@@ -33,6 +33,8 @@ namespace IngameScript
         #endregion
 
         DateTime _momento;
+        IList<IMyTerminalBlock> _terminalBlocks;
+        IList<IMyBlockGroup> _terminalGroups;
         IDictionary<string, IEnumerable<IMyTerminalBlock>> _blocksDictionary;
         IDictionary<string, ICommandInstruction> _commands;
         InstructionCommand _command;
@@ -55,49 +57,79 @@ namespace IngameScript
                 var debug = new StringBuilder();
                 var now = DateTime.UtcNow;
 
-                if (UPDATE_TICKS == 0 || ticks % UPDATE_TICKS == 0)
+                try
                 {
-                    if (_command != null)
+                    if (UPDATE_TICKS == 0 || ticks % UPDATE_TICKS == 0)
                     {
-                        IEnumerable<Task> thenTasks;
-
-                        AdvancedEcho($"Running {_command.CommandName}", append: true);
-                        thenTasks = Tasks.CreateTasks(_command.Body, _blocksDictionary);
-                        StartTasks(thenTasks, $"{debug}\nStarted.", appendMessage: true);
-                    }
-                    else if (_tasks != null)
-                    {
-                        IEnumerable<Task> tasksRunning;
-
-                        tasksRunning = _tasks.Run(debug);
-                        if (tasksRunning.Any())
+                        if (_terminalBlocks == null || _terminalGroups == null)
                         {
-                            AdvancedEcho($"{debug}", append: true);
-                            AdvancedEcho($"Running tasks: {(DateTime.UtcNow - now).TotalMilliseconds:N0}", append: true);
+                            AdvancedEcho($"Getting terminal blocks", append: true);
+                            _terminalBlocks = GridTerminalSystem.GetBlocks();
+                            AdvancedEcho($" - OK", append: true);
+                            AdvancedEcho($"Getting terminal groups", append: true);
+                            _terminalGroups = GridTerminalSystem.GetBlockGroups();
+                            AdvancedEcho($" - OK", append: true);
+                        }
+                        else if (_blocksDictionary == null)
+                        {
+                            var blockNames = _commands.Values
+                                .OfType<InstructionCommand>()
+                                .SelectMany(cmd => cmd.Body)
+                                .SelectMany(body => body.Instructions)
+                                .Select(instruction => instruction.BlockName);
+
+                            AdvancedEcho($"Building dictionary", append: true);
+                            _blocksDictionary = Helper.CreateBlockDictionary(blockNames, _terminalBlocks, _terminalGroups);
+                            AdvancedEcho($" - OK", append: true);
+                        }
+                        else if (_command != null)
+                        {
+                            IEnumerable<Task> thenTasks;
+
+                            AdvancedEcho($"Running {_command.CommandName}", append: true);
+                            thenTasks = Tasks.CreateTasks(_command.Body, _blocksDictionary);
+                            StartTasks(thenTasks, $"{debug}\nStarted.", appendMessage: true);
+                        }
+                        else if (_tasks != null)
+                        {
+                            IEnumerable<Task> tasksRunning;
+
+                            tasksRunning = _tasks.Run(debug);
+                            if (tasksRunning.Any())
+                            {
+                                AdvancedEcho($"{debug}", append: true);
+                                AdvancedEcho($"Running tasks: {(DateTime.UtcNow - now).TotalMilliseconds:N0}", append: true);
+                            }
+                            else
+                            {
+                                // Finish cycle.
+                                EndCycle();
+                                AdvancedEcho("Done.");
+                            }
+                        }
+                        else if (_conditionCommand != null)
+                        {
+                            CheckNextCondition();
+                            AdvancedEcho($"Condition command: {(DateTime.UtcNow - now).TotalMilliseconds:N0}", append: true);
                         }
                         else
                         {
-                            // Finish cycle.
-                            _tasks = null;
-                            Runtime.UpdateFrequency = UpdateFrequency.None;
-                            AdvancedEcho("Done.");
+                            throw new Exception("Invalid state.");
                         }
+                        ticks = 0;
                     }
-                    else if (_conditionCommand != null)
-                    {
-                        CheckNextCondition();
-                        AdvancedEcho($"Condition command: {(DateTime.UtcNow - now).TotalMilliseconds:N0}", append: true);
-                    }
-                    else
-                    {
-                        throw new Exception("Invalid state.");
-                    }
-                    ticks = 0;
+                    ticks++;
                 }
-                ticks++;
+                catch (Exception ex)
+                {
+                    EndCycle();
+                    AdvancedEcho($"ERROR: {ex.Message}", append: true);
+                }
+
             }
             else
             {
+                var debug = new StringBuilder();
                 ICommandInstruction command;
 
                 try
@@ -110,13 +142,9 @@ namespace IngameScript
                     }
                     else if (_commands.TryGetValue(argument, out command))
                     {
-                        var blockNames = _commands.Values
-                            .OfType<InstructionCommand>()
-                            .SelectMany(cmd => cmd.Body)
-                            .SelectMany(body => body.Instructions)
-                            .Select(instruction => instruction.BlockName);
-
-                        _blocksDictionary = Helper.CreateBlockDictionary(blockNames, GridTerminalSystem.GetBlocks(), GridTerminalSystem.GetBlockGroups());
+                        _terminalBlocks = null;
+                        _terminalGroups = null;
+                        _blocksDictionary = null;
                         if (command is InstructionCommand)
                         {
                             StartCommand((InstructionCommand)command, $"Command '{command.CommandName}' started.");
@@ -133,7 +161,11 @@ namespace IngameScript
                 }
                 catch (Exception ex)
                 {
-                    AdvancedEcho($"ERROR: {ex.Message}");
+                    debug.AppendLine($"ERROR: {ex.Message}");
+                }
+                finally
+                {
+                    AdvancedEcho($"{debug}");
                 }
             }
         }
@@ -243,6 +275,11 @@ namespace IngameScript
             }
         }
 
+        void EndCycle()
+        {
+            _tasks = null;
+            Runtime.UpdateFrequency = UpdateFrequency.None;
+        }
 
         void AdvancedEchoReset()
         {
