@@ -71,6 +71,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="CustomData\TestDelay.txt" />
     <Content Include="CustomData\TestHydrogen.txt" />
     <Content Include="CustomData\TestArguments.txt" />
     <Content Include="CustomData\TestComments.txt" />

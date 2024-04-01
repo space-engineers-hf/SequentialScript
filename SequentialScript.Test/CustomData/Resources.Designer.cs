@@ -92,6 +92,19 @@ namespace SequentialScript.Test.CustomData {
         /// <summary>
         ///   Looks up a localized string similar to [OPEN]
         ///run
+        /// Block -&gt; Some Action /NoCheck /Key1:Value /Key2:&quot;Value with spaces&quot; /Key3:&quot;Value with special characters :/&quot;
+        /// Delay 3000
+        ///as @action.
+        /// </summary>
+        internal static string TestDelay {
+            get {
+                return ResourceManager.GetString("TestDelay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to [OPEN]
+        ///run
         /// Door Light -&gt; Enable
         ///as @open_door_1
         ///
@@ -142,7 +155,7 @@ namespace SequentialScript.Test.CustomData {
         ///run
         /// Hydrogen Example (Status LCD) -&gt; Set /Index:-1 /Background:YELLOW /Text:Connecting...
         /// Hydrogen Example (Piston) -&gt; Extend
-        ///as piston_extended
+        ///as @piston_extended
         ///
         ///when @piston_extended
         ///run
@@ -154,8 +167,7 @@ namespace SequentialScript.Test.CustomData {
         /// Hydrogen Example (Status LCD) -&gt; Set /Index:-1 /Background:BLUE /Text:Recharging...
         /// Hydrogen Example (Tank) -&gt; Stockpile
         ///as @tank_full
-        ///
-        /// [rest of string was truncated]&quot;;.
+        ///        /// [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string TestHydrogen {
             get {
@@ -176,7 +188,18 @@ namespace SequentialScript.Test.CustomData {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to [TEST]
+        ///run
+        /// Block 1 -&gt; Enabled
+        /// Block 2 -&gt; Enabled
+        ///as @block_name
+        ///
+        ///run
+        /// Block 3 -&gt; Enabled
+        /// Block 4 -&gt; Enabled
+        /// Block 5 -&gt; Enabled
+        ///as @block_name
+        ///.
         /// </summary>
         internal static string TestSyntaxAliasDuplicated {
             get {

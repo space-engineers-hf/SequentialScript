@@ -192,5 +192,43 @@ namespace SequentialScript.Test
             commands = IngameScript.InstructionParser.Parse(CustomData.Resources.TestHydrogen);
             commands.ToString();
         }
+
+        [TestMethod]
+        public void TestDelay()
+        {
+            IDictionary<string, IngameScript.ICommandInstruction> commands;
+            var expected = new Dictionary<string, IngameScript.ICommandInstruction>()
+            {
+                { "OPEN", new IngameScript.InstructionCommand {
+                    CommandName = "OPEN",
+                    Body = new Dictionary<string, IngameScript.InstructionBlock> {
+                        { "@action", new IngameScript.InstructionBlock {
+                            Alias = "@action",
+                            PreviousAlias = new string[] { },
+                            Instructions = new []{ new IngameScript.Instruction {
+                                BlockName = "Block",
+                                ActionName = "Some Action",
+                                Arguments = new Dictionary<string, string> {
+                                    { "NoCheck", "" },
+                                    { "Key1", "Value" },
+                                    { "Key2", "Value with spaces" },
+                                    { "Key3", "Value with special characters :/" }
+                                },
+                                IsValid = true,
+                            }, new IngameScript.Instruction { 
+                                BlockName = null,
+                                ActionName = "DELAY",
+                                Arguments = new Dictionary<string, string> { { "TIME", "3000" } },
+                                IsValid = true,
+                            }},
+                        } }
+                    }.Values
+                }}
+            };
+
+            commands = IngameScript.InstructionParser.Parse(CustomData.Resources.TestDelay);
+            InstrucionAssert.AreEqual(expected, commands);
+        }
+    
     }
 }

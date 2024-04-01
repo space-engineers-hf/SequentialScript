@@ -24,24 +24,6 @@ namespace IngameScript
     static class Tasks
     {
 
-        enum TaskStatus
-        {
-            Pending,
-            Running,
-            Completed
-        }
-
-        enum TaskStatusMode
-        {
-            /// <summary>
-            /// Checks if task is already done.
-            /// </summary>
-            Condition,
-            /// <summary>
-            /// Checks if every actions in the task have run and finished.
-            /// </summary>
-            Run
-        }
 
         /// <summary>
         /// Creates a list of tasks from a list of <see cref="InstructionBlock"/>.
@@ -56,60 +38,26 @@ namespace IngameScript
 
             foreach (var instructionBlock in instructions)
             {
-                var actions = new List<TaskAction>();
+                var actions = new List<ITaskAction>();
 
                 foreach (var instruction in instructionBlock.Instructions)
                 {
-                    IEnumerable<IMyTerminalBlock> blocks = null;
-
-                    // Try get blocks.
-                    if (blockDictionary.TryGetValue(instruction.BlockName, out blocks))
+                    if (instruction.BlockName == null)
                     {
-                        foreach (var block in blocks)
+                        // Script actions.
+                        switch (instruction.ActionName)
                         {
-                            string argumentValue;
-                            bool check;
-                            int wait;
-
-                            // Check parameters
-                            check = instruction.Arguments.TryGetValue("CHECK", out argumentValue) && (string.IsNullOrWhiteSpace(argumentValue) || argumentValue.Equals("true", StringComparison.OrdinalIgnoreCase));
-                            if (instruction.Arguments.TryGetValue("MAXWAIT", out argumentValue))
-                            {
-                                if (string.IsNullOrWhiteSpace(argumentValue) || !int.TryParse(argumentValue, out wait))
-                                {
-                                    throw new FormatException($"'/MAXWAIT' must have a numeric value.");
-                                }
-                            }
-                            else if (instruction.Arguments.TryGetValue("WAIT", out argumentValue))
-                            {
-                                if (string.IsNullOrWhiteSpace(argumentValue) || !int.TryParse(argumentValue, out wait))
-                                {
-                                    throw new FormatException($"'/WAIT' must have a numeric value.");
-                                }
-                            }
-                            else if (instruction.Arguments.TryGetValue("NOWAIT", out argumentValue) && (string.IsNullOrWhiteSpace(argumentValue) || argumentValue.Equals("true", StringComparison.OrdinalIgnoreCase)))
-                            {
-                                wait = 0;
-                            }
-                            else
-                            {
-                                wait = -1;
-                            }
-
-                            // Add action.
-                            actions.Add(new TaskAction
-                            {
-                                Block = block,
-                                ActionProfile = ActionProfiles.GetActionProfile(block, instruction.ActionName),
-                                Arguments = instruction.Arguments,
-                                Check = check,
-                                Wait = wait
-                            });
+                            case "DELAY":
+                                actions.Add(CreateTaskDelay(instruction));
+                                break;
+                            default:
+                                throw new Exception($"Action name: '{instruction.ActionName}'.");
                         }
                     }
                     else
                     {
-                        throw new KeyNotFoundException($"No blocks found with name '{instruction.BlockName}'.");
+                        // Block actions.
+                        actions.AddRange(CreateTaskAction(instruction, blockDictionary));
                     }
                 }
                 result.Add(new Task
@@ -127,6 +75,93 @@ namespace IngameScript
             return result;
         }
 
+        private static IEnumerable<TaskAction> CreateTaskAction(Instruction instruction, IDictionary<string, IEnumerable<IMyTerminalBlock>> blockDictionary)
+        {
+            var list = new List<TaskAction>();
+            IEnumerable<IMyTerminalBlock> blocks = null;
+
+            // Try get blocks.
+            if (blockDictionary.TryGetValue(instruction.BlockName, out blocks))
+            {
+                string argumentValue;
+                bool check;
+                int wait;
+
+                // Check parameters
+                check = instruction.Arguments.TryGetValue("CHECK", out argumentValue) && (string.IsNullOrWhiteSpace(argumentValue) || argumentValue.Equals("true", StringComparison.OrdinalIgnoreCase));
+                if (instruction.Arguments.TryGetValue("MAXWAIT", out argumentValue))
+                {
+                    if (string.IsNullOrWhiteSpace(argumentValue) || !int.TryParse(argumentValue, out wait))
+                    {
+                        throw new FormatException($"'/MAXWAIT' must have a numeric value.");
+                    }
+                }
+                else if (instruction.Arguments.TryGetValue("WAIT", out argumentValue))
+                {
+                    if (string.IsNullOrWhiteSpace(argumentValue) || !int.TryParse(argumentValue, out wait))
+                    {
+                        throw new FormatException($"'/WAIT' must have a numeric value.");
+                    }
+                }
+                else if (instruction.Arguments.TryGetValue("NOWAIT", out argumentValue) && (string.IsNullOrWhiteSpace(argumentValue) || argumentValue.Equals("true", StringComparison.OrdinalIgnoreCase)))
+                {
+                    wait = 0;
+                }
+                else
+                {
+                    wait = -1;
+                }
+
+                foreach (var block in blocks)
+                {
+
+                    // Add action.
+                    list.Add(new TaskAction
+                    {
+                        Block = block,
+                        ActionProfile = ActionProfiles.GetActionProfile(block, instruction.ActionName),
+                        Arguments = instruction.Arguments,
+                        IsCommandCondition = check,
+                        Wait = wait
+                    });
+                }
+            }
+            else
+            {
+                throw new KeyNotFoundException($"No blocks found with name '{instruction.BlockName}'.");
+            }
+            return list;
+        }
+
+        private static TaskActionDelay CreateTaskDelay(Instruction instruction)
+        {
+            string argumentValue;
+            int milliseconds;
+
+            if (instruction.Arguments.TryGetValue("TIME", out argumentValue))
+            {
+                if (string.IsNullOrWhiteSpace(argumentValue) || !int.TryParse(argumentValue, out milliseconds))
+                {
+                    throw new FormatException($"Delay time must be numeric.");
+                }
+            }
+            else
+            {
+                throw new FormatException($"No time defined for delay.");
+            }
+
+            return new TaskActionDelay
+            {
+                Delay = milliseconds
+            };
+        }
+
+        /// <summary>
+        /// Starts task.
+        /// </summary>
+        /// <param name="tasks"></param>
+        /// <param name="debug"></param>
+        /// <returns></returns>
         public static IEnumerable<Task> Run(this IEnumerable<Task> tasks, StringBuilder debug = null)
         {
             var momento = DateTime.UtcNow;
@@ -152,7 +187,7 @@ namespace IngameScript
                     {
                         foreach (var action in task.Actions)
                         {
-                            action.ActionProfile.OnActionCallback(action.Block, action.Arguments);
+                            action.Execute();
                             action.StartTime = momento;
                         }
                         task.IsRunning = true;
@@ -180,7 +215,7 @@ namespace IngameScript
         public static bool IsCompleted(this IEnumerable<Task> tasks, StringBuilder debug = null)
         {
             bool result;
-            var checkActions = tasks.SelectMany(x => x.Actions).Where(x => x.Check);
+            var checkActions = tasks.SelectMany(x => x.Actions).Where(x => x.IsCommandCondition);
 
             debug?.AppendLine("Checking:");
             if (!checkActions.Any())
@@ -239,67 +274,18 @@ namespace IngameScript
         /// <summary>
         /// Checks if all <see cref="TaskAction"/> have been completed.
         /// </summary>
-        private static bool IsDone(IEnumerable<TaskAction> actions, TaskStatusMode mode, DateTime? momento = null, StringBuilder debug = null)
+        private static bool IsDone(IEnumerable<ITaskAction> actions, TaskStatusMode mode, DateTime? momento = null, StringBuilder debug = null)
         {
-            return actions.All(action =>
-            {
-                bool isCompleted = false;
-                bool printDebug = false;
-                string sufixDebug = null;
-
-                switch (mode)
-                {
-                    case TaskStatusMode.Condition:
-                        // Condition wait is ignored.
-                        if (action.Wait > -1)
-                        {
-                            sufixDebug = $"(wait:{action.Wait})";
-                            isCompleted = true;
-                            printDebug = false;
-                        }
-                        break;
-
-                    case TaskStatusMode.Run:
-                        if (action.Wait == 0) // No wait.
-                        {
-                            isCompleted = true;
-                            sufixDebug = $"(wait:{action.Wait})";
-                        }
-                        else if (action.Wait > -1) // -1 wait until done
-                        {
-                            isCompleted = (action.StartTime != null && (((momento ?? DateTime.UtcNow) - action.StartTime.Value).TotalMilliseconds > action.Wait)); // Wait for maximun...
-                        }
-                        sufixDebug = $"(wait:{action.Wait})";
-                        printDebug = true;
-                        break;
-
-                    default:
-                        break;
-                }
-                isCompleted |= action.ActionProfile.IsCompleteCallback(action.Block, action.Arguments);
-                if (printDebug && !isCompleted)
-                {
-                    var isCompletedText = (isCompleted ? "Done" : "Pending");
-                    var actionDebug = action.ActionProfile.GetCompletionDetails(action.Block, action.Arguments);
-
-                    if (!string.IsNullOrWhiteSpace(actionDebug))
-                    {
-                        sufixDebug += $" ({actionDebug})";
-                    }
-                    debug?.AppendLine($"  - {action.Block.DisplayNameText}.{action.ActionProfile.ActionNames.First()} ({isCompletedText})");
-                    debug?.AppendLine($"    {sufixDebug?.Trim()} {action.StartTime?.ToString("HH:mm:ss")}");
-                }
-                return isCompleted;
-            });
+            return actions.All(action => action.Check(mode, momento, debug));
         }
 
         /// <summary>
         /// Returns the last action for each block taking in mind the running sequence.
         /// </summary>
         /// <param name="tasks">List of instruction blocks.</param>
-        public static IEnumerable<TaskAction> GetLastActions(this IEnumerable<Task> tasks)
+        public static IEnumerable<ITaskAction> GetLastActions(this IEnumerable<Task> tasks)
         {
-            var actionDictionary = new Dictionary<string, TaskAction>(StringComparer.OrdinalIgnoreCase);
+            var actionDictionary = new Dictionary<string, ITaskAction>(StringComparer.OrdinalIgnoreCase);
             var validatedTasks = new List<Task>(); // All tasks already validated.
             IEnumerable<Task> validationTasks; // Tasks to validate for each iteration.
             var i = 0;
@@ -312,7 +298,7 @@ namespace IngameScript
                 {
                     foreach (var action in task.Actions)
                     {
-                        actionDictionary[$"{action.Block.EntityId}\t{action.ActionProfile.GroupName}"] = action;
+                        actionDictionary[action.ActionKey] = action;
                     }
                     validatedTasks.Add(task);
                 }

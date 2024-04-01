@@ -5,6 +5,7 @@
     - [Blocks](#blocks)
     - [Sequence](#sequence)
     - [Argumens](#arguments)
+    - [Delay](#delay)
     - [Comments](#comments)
 - [Action list](#action-list)
 - [Known issues](#known-issues)
@@ -199,6 +200,22 @@ as @done
 #### Custom-defined arguments by action
 Some actions have their own arguments. Those arguments are defined in the [action list](#action-list).
 
+### Delay
+Include "DELAY" instruction (in milliseconds) when it is necessary to wait for a specific time before a sequence block is done.
+
+The following example waits for 3 seconds before switchs on the second light.
+```
+[COMMAND_NAME]
+run
+ Interior Light 1 -> Enable
+ delay 3000 // Waits for 3 seconds.
+as @light1_on
+
+when @light1_on
+run
+ Interior Light 2 -> Enable
+as @light2_on
+```
 
 ### Comments
 

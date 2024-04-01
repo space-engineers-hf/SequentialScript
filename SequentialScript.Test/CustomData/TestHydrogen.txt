@@ -6,7 +6,7 @@ as @thrusters_disabled
 run
  Hydrogen Example (Status LCD) -> Set /Index:-1 /Background:YELLOW /Text:Connecting...
  Hydrogen Example (Piston) -> Extend
-as piston_extended
+as @piston_extended
 
 when @piston_extended
 run

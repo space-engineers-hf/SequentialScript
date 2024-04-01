@@ -1,0 +1,5 @@
+﻿[OPEN]
+run
+ Block -> Some Action /NoCheck /Key1:Value /Key2:"Value with spaces" /Key3:"Value with special characters :/"
+ Delay 3000
+as @action

@@ -99,8 +99,11 @@
     <AdditionalFiles Include="Instructions.readme" />
     <AdditionalFiles Include="thumb.png" />
     <AdditionalFiles Include="MDK\whitelist.cache" />
+    <Compile Include="Tasks\ITaskAction.cs" />
     <Compile Include="Tasks\TaskAction.cs" />
     <Compile Include="Tasks\Task.cs" />
+    <Compile Include="Tasks\TaskActionDelay.cs" />
+    <Compile Include="Tasks\TaskEnums.cs" />
     <Compile Include="Tasks\Tasks.cs" />
   </ItemGroup>
   <Import Project="..\..\CommonScript\CommonScript\CommonScript.projitems" Label="Shared" />

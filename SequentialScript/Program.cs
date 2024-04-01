@@ -30,6 +30,11 @@ namespace IngameScript
         static readonly UpdateFrequency UPDATE_FREQUENCY = UpdateFrequency.Update10; // Update1, Update10, Update100
         static readonly int UPDATE_TICKS = 0; // Very slow mode multiplier (for debug)
 
+
+        /* ----------------------------------------------------------------------------------- */
+        /* --- ¡¡¡IMPORTANT!!! Do not change anything below this line. --- */
+        /* ----------------------------------------------------------------------------------- */
+
         #endregion
 
         DateTime _momento;
@@ -76,7 +81,9 @@ namespace IngameScript
                                 .OfType<InstructionCommand>()
                                 .SelectMany(cmd => cmd.Body)
                                 .SelectMany(body => body.Instructions)
-                                .Select(instruction => instruction.BlockName);
+                                .Where(instruction => instruction.BlockName != null)
+                                .Select(instruction => instruction.BlockName)
+                                .Distinct();
 
                             AdvancedEcho($"Building dictionary", append: true);
                             _blocksDictionary = Helper.CreateBlockDictionary(blockNames, _terminalBlocks, _terminalGroups);
@@ -283,7 +290,7 @@ namespace IngameScript
 
         void AdvancedEchoReset()
         {
-            _momento = DateTime.Now;
+            _momento = DateTime.UtcNow;
         }
 
         void AdvancedEcho(string message, bool append = false)
@@ -297,7 +304,7 @@ namespace IngameScript
                 builder.Append(value);
                 message = builder.ToString();
             }
-            message = $"| Elapsed {(DateTime.Now - _momento).TotalMilliseconds:00}ms |\n{message}";
+            message = $"| Elapsed {(DateTime.UtcNow - _momento).TotalMilliseconds:00}ms |\n{message}";
 
             Echo(message);
             if (DEBUG_IN_SCREEN)

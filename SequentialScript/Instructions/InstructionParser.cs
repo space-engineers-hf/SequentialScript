@@ -125,40 +125,52 @@ namespace IngameScript
                             .Where(line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith("//")) // Ignore empty lines and comments.
                             .Select((line, index) =>
                             {
+                                Instruction instruction = null;
+
                                 // Remove comments
                                 var lineComments = line.Split(new[] { "//" }, StringSplitOptions.None);
-                                var lineWithoutComments = lineComments.First();
+                                var lineWithoutComments = lineComments.First().Trim();
 
-                                // Take BlockName and ActionName
-                                var lineItems = lineWithoutComments.Trim().Split(new[] { "->" }, StringSplitOptions.RemoveEmptyEntries);
-                                string blockName = null, actionName = null;
-                                bool isValid;
-
-                                if (lineItems.Length > 0)
+                                // Create instruction.
+                                if (lineWithoutComments.Contains("->"))
                                 {
-                                    blockName = lineItems[0].Trim();
+                                    // Instruction of IMyTerminalBlock -> Action
+                                    instruction = CreateInstruction(lineWithoutComments);
                                 }
-                                if (lineItems.Length > 1)
+                                else
                                 {
-                                    actionName = lineItems[1].Trim();
+                                    // Script reserved instructions.
+                                    var lineItems = lineWithoutComments.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                                    var command = lineItems.FirstOrDefault();
+
+                                    if (command == null)
+                                    {
+                                        instruction = null;
+                                    }
+                                    else if (command.Equals("DELAY", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        instruction = CreateInstructionDelay(lineItems);
+                                    }
+                                    if (instruction == null)
+                                    {
+                                        instruction = new Instruction
+                                        {
+                                            BlockName = null,
+                                            ActionName = null,
+                                            Arguments = null,
+                                            IsValid = false
+                                        };
+                                    }
                                 }
-                                isValid = lineItems.Length == 2;
-
-                                // Arguments
-                                var arguments = GetArguments(actionName);
-
                                 return new
                                 {
                                     Line = index + 1,
-                                    BlockName = blockName,
-                                    ActionName = arguments[""].Trim(),
-                                    Arguments = arguments.Where(x => !string.IsNullOrEmpty(x.Key)).ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase),
-                                    IsValid = isValid
+                                    Instruction = instruction,
                                 };
                             })
                         ;
 
-                        var invalid = actions.Where(x => !x.IsValid);
+                        var invalid = actions.Where(x => !x.Instruction.IsValid);
                         if (invalid.Any())
                         {
                             throw new SyntaxException(
@@ -197,13 +209,7 @@ namespace IngameScript
                                 {
                                     Alias = alias,
                                     PreviousAlias = previousActionsMatch.Select(x => x.Alias),
-                                    Instructions = actions.Select(x => new Instruction
-                                    {
-                                        BlockName = x.BlockName,
-                                        ActionName = x.ActionName,
-                                        Arguments = x.Arguments,
-                                        IsValid = x.IsValid
-                                    })
+                                    Instructions = actions.Select(x => x.Instruction)
                                 });
                             }
                         }
@@ -235,6 +241,55 @@ namespace IngameScript
                 };
             }
             return result;
+        }
+
+        private static Instruction CreateInstruction(string lineWithoutComments)
+        {
+            // Take BlockName and ActionName
+            var lineItems = lineWithoutComments.Split(new[] { "->" }, StringSplitOptions.RemoveEmptyEntries);
+            string blockName = null, actionName = null;
+            bool isValid;
+
+            if (lineItems.Length > 0)
+            {
+                blockName = lineItems[0].Trim();
+            }
+            if (lineItems.Length > 1)
+            {
+                actionName = lineItems[1].Trim();
+            }
+            isValid = lineItems.Length == 2;
+
+            // Arguments
+            var arguments = GetArguments(actionName);
+
+            // Return
+            return new Instruction
+            {
+                BlockName = blockName,
+                ActionName = arguments[""].Trim(),
+                Arguments = arguments.Where(x => !string.IsNullOrEmpty(x.Key)).ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase),
+                IsValid = isValid
+            };
+        }
+
+        private static Instruction CreateInstructionDelay(string[] lineItems)
+        {
+            string timeString = null;
+
+            if (lineItems.Length >= 1)
+            {
+                timeString = lineItems[1];
+            }
+            return new Instruction
+            {
+                BlockName = null,
+                ActionName = "DELAY",
+                Arguments = new Dictionary<string, string>() {
+                    { "TIME", timeString }
+                },
+                IsValid = true
+            };
         }
 
         private static ConditionCommandInstruction CreateConditionCommand(System.Text.RegularExpressions.Match commandMatch)

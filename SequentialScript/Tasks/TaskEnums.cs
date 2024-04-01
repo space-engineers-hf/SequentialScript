@@ -1,4 +1,5 @@
 ﻿using Sandbox.Game.EntityComponents;
+using Sandbox.Game.GameSystems;
 using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
@@ -20,15 +21,24 @@ using VRageMath;
 
 namespace IngameScript
 {
-    class Task
+
+    enum TaskStatus
     {
-
-        public string Alias { get; set; }
-        public IEnumerable<Task> PreviousTasks { get; set; }
-        public IEnumerable<ITaskAction> Actions { get; set; }
-
-        public bool IsRunning { get; set; }
-        public bool IsDone { get; set; }
-
+        Pending,
+        Running,
+        Completed
     }
+
+    enum TaskStatusMode
+    {
+        /// <summary>
+        /// Checks if task is already done.
+        /// </summary>
+        Condition,
+        /// <summary>
+        /// Checks if every actions in the task have run and finished.
+        /// </summary>
+        Run
+    }
+
 }
