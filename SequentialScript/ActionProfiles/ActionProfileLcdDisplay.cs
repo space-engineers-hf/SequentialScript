@@ -23,6 +23,9 @@ namespace IngameScript
     sealed class ActionProfileLcdDisplay : ActionProfile<IMyTerminalBlock>
     {
 
+        readonly List<string> Images = new List<string>();
+        readonly List<string> Scripts = new List<string>();
+
         public override IEnumerable<string> ActionNames => new[] { "Display" };
 
         public override Action<IMyTerminalBlock, IDictionary<string, string>> OnActionCallback =>
@@ -37,14 +40,51 @@ namespace IngameScript
                     if (args.TryGetValue("BACKGROUND", out value))
                     {
                         textSurface.BackgroundColor = Helper.ParseColor(value);
+                        textSurface.ScriptBackgroundColor = Helper.ParseColor(value);
                     }
                     if (args.TryGetValue("COLOR", out value))
                     {
                         textSurface.FontColor = Helper.ParseColor(value);
+                        textSurface.ScriptForegroundColor = Helper.ParseColor(value);
+                    }
+                    if (args.TryGetValue("PADDING", out value))
+                    {
+                        textSurface.TextPadding = float.Parse(value);
+                    }
+                    if (args.TryGetValue("SIZE", out value))
+                    {
+                        textSurface.FontSize = float.Parse(value);
                     }
                     if (args.TryGetValue("TEXT", out value))
                     {
+                        textSurface.ContentType = ContentType.TEXT_AND_IMAGE;
                         textSurface.WriteText(value.Replace("\\n", "\n"));
+                    }
+                    if (args.TryGetValue("IMAGE", out value))
+                    {
+                        textSurface.ContentType = ContentType.TEXT_AND_IMAGE;
+                        textSurface.ClearImagesFromSelection();
+                        foreach (var image in value.Split(','))
+                        {
+                            textSurface.AddImageToSelection(image);
+                        }
+                    }
+                    if (args.TryGetValue("SCRIPT", out value))
+                    {
+                        Scripts.Clear();
+                        textSurface.GetScripts(Scripts);
+                        if (Scripts.Contains(value, StringComparer.OrdinalIgnoreCase))
+                        {
+                            textSurface.Script = value;
+                        }
+                        else
+                        {
+                            throw new ArgumentException($"Invalid script '{value}'. Allowed scripts: {string.Join(", ", Scripts)}");
+                        }
+                    }
+                    else if (args.TryGetValue("NONE", out value))
+                    {
+                        textSurface.ContentType = ContentType.NONE;
                     }
                 }
                 else
@@ -71,9 +111,23 @@ namespace IngameScript
                     {
                         result &= (textSurface.FontColor == Helper.ParseColor(value));
                     }
+                    if (args.TryGetValue("PADDING", out value))
+                    {
+                        result &= textSurface.TextPadding == float.Parse(value);
+                    }
+                    if (args.TryGetValue("SIZE", out value))
+                    {
+                        result &= textSurface.FontSize == float.Parse(value);
+                    }
                     if (args.TryGetValue("TEXT", out value))
                     {
-                        result &= (textSurface.GetText() == value.Replace("\\n", "\n"));
+                        result &= (textSurface.ContentType == ContentType.TEXT_AND_IMAGE) && (textSurface.GetText() == value.Replace("\\n", "\n"));
+                    }
+                    if (args.TryGetValue("IMAGE", out value))
+                    {
+                        Images.Clear();
+                        textSurface.GetSelectedImages(Images);
+                        result &= ((textSurface.ContentType == ContentType.TEXT_AND_IMAGE) && (string.Join(",", Images) == value));
                     }
                     return result;
                 }
@@ -83,6 +137,32 @@ namespace IngameScript
                 }
             };
 
+        protected override string GetCompletionDetails(IMyTerminalBlock block, IDictionary<string, string> args)
+        {
+            if (block is IMyTextSurfaceProvider)
+            {
+                string result = "";
+                var index = GetTextSurfaceIndex(args);
+                var textSurface = GetTextSurface(block, index);
+                string value;
+
+                if (args.TryGetValue("TEXT", out value))
+                {
+                    result += $"Text: '{textSurface.GetText().Replace("\n", "\\n")}' vs '{value}' ";
+                }
+                if (args.TryGetValue("IMAGE", out value))
+                {
+                    Images.Clear();
+                    textSurface.GetSelectedImages(Images);
+                    result += $"Count: {Images.Count}; '{string.Join(",", Images)}' vs '{value}' ";
+                }
+                return result.TrimEnd();
+            }
+            else
+            {
+                throw new NotSupportedException($"Block '{block.DisplayNameText}' not supports displays.");
+            }
+        }
 
         static int? GetTextSurfaceIndex(IDictionary<string, string> args)
         {
@@ -118,7 +198,7 @@ namespace IngameScript
 
                 case 1:
                     var first = textSurfaces.First();
-                    
+
                     if (index != null && first.Index != index)
                     {
                         throw new ArgumentException($"Display index '{index}' is not available for block '{block.DisplayNameText}'.");

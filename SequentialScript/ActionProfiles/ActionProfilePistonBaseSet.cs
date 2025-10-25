@@ -38,6 +38,10 @@ namespace IngameScript
                 {
                     block.MinLimit = float.Parse(value);
                 }
+                if (args.TryGetValue("SPEED", out value))
+                {
+                    block.Velocity = (ParseValue(value) ?? 0);
+                }
             };
 
         public override Func<IMyPistonBase, IDictionary<string, string>, bool> IsCompleteCallback =>
@@ -53,6 +57,10 @@ namespace IngameScript
                 if (args.TryGetValue("MIN", out value))
                 {
                     result &= (block.MinLimit == float.Parse(value));
+                }
+                if (args.TryGetValue("SPEED", out value))
+                {
+                    result &= (block.Velocity == (ParseValue(value) ?? 0));
                 }
                 return result;
             };

@@ -27,6 +27,7 @@ namespace IngameScript
         {
             // Core actions first, especific block type actions last.
             new ActionProfileFunctionalBlockEnable(), new ActionProfileFunctionalBlockDisable(),
+            new ActionProfileInventoryTake(),
             new ActionProfilePistonBaseExtend(), new ActionProfilePistonBaseRetract(), new ActionProfilePistonBaseReverse(), new ActionProfilePistonBaseSet(),
             new ActionProfileMergeBlockEnable(), new ActionProfileMergeBlockDisable(),
             new ActionProfileDoorOpen(), new ActionProfileDoorClose(), new ActionProfileDoorToggle(),
@@ -36,12 +37,13 @@ namespace IngameScript
             new ActionProfileMotorStatorForward(), new ActionProfileMotorStatorBack(), new ActionProfileMotorStatorDetach(), new ActionProfileMotorStatorSet(),
             new ActionProfileProgrammableBlockRun(),
             new ActionProfileBatteryAuto(), new ActionProfileBatteryRecharge(), new ActionProfileBatteryDischarge(),
-            new ActionProfileConnectorLock(), new ActionProfileConnectorUnlock(),
+            new ActionProfileConnectorLock(), new ActionProfileConnectorUnlock(), new ActionProfileConnectorThrow(), new ActionProfileConnectorKeep(),
             new ActionProfileLightSet(),
             new ActionProfileGasTankStockpile(), new ActionProfileGasTankAuto(),
             new ActionProfileLcdDisplay(),
             new ActionProfileThrusterSet(),
             new ActionProfileWarheadArm(), new ActionProfileWarheadDisarm(), new ActionProfileWarheadDetonate(), new ActionProfileWarheadStart(), new ActionProfileWarheadStop(),
+            new ActionProfileConveyorSorterDrain(), new ActionProfileConveyorSorterIdle(), new ActionProfileConveyorSorterSet(),
         };
 
         public static IActionProfile GetActionProfile(IMyTerminalBlock block, string action)

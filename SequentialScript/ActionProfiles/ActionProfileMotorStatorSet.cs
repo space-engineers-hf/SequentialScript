@@ -38,6 +38,10 @@ namespace IngameScript
                 {
                     block.LowerLimitDeg = ParseValue(value) ?? float.MinValue;
                 }
+                if (args.TryGetValue("SPEED", out value))
+                {
+                    block.TargetVelocityRPM = (ParseValue(value) ?? 0);
+                }
             };
 
         public override Func<IMyMotorStator, IDictionary<string, string>, bool> IsCompleteCallback =>
@@ -53,6 +57,10 @@ namespace IngameScript
                 if (args.TryGetValue("MIN", out value))
                 {
                     result &= (block.LowerLimitDeg == (ParseValue(value) ?? float.MinValue));
+                }
+                if (args.TryGetValue("SPEED", out value))
+                {
+                    result &= (block.TargetVelocityRPM == (ParseValue(value) ?? 0));
                 }
                 return result;
             };

@@ -110,7 +110,7 @@ namespace IngameScript
                     }
                     else
                     {
-                        throw new KeyNotFoundException($"No blocks found with name '{blockName}'.");
+                        // No nothing. It will check when the task run.
                     }
                 }
             }

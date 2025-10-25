@@ -77,12 +77,12 @@ namespace IngameScript
         private static IEnumerable<TaskAction> CreateTaskAction(Instruction instruction, IDictionary<string, IEnumerable<IMyTerminalBlock>> blockDictionary)
         {
             var list = new List<TaskAction>();
-            IEnumerable<IMyTerminalBlock> blocks = null;
+            IEnumerable<IMyTerminalBlock> blocks;
+            string argumentValue;
 
             // Try get blocks.
             if (blockDictionary.TryGetValue(instruction.BlockName, out blocks))
             {
-                string argumentValue;
                 bool check;
                 int wait;
 
@@ -113,7 +113,6 @@ namespace IngameScript
 
                 foreach (var block in blocks)
                 {
-
                     // Add action.
                     list.Add(new TaskAction
                     {
@@ -124,6 +123,10 @@ namespace IngameScript
                         Wait = wait
                     });
                 }
+            }
+            else if (instruction.Arguments.TryGetValue("OPTIONAL", out argumentValue) && (string.IsNullOrWhiteSpace(argumentValue) || argumentValue.Equals("true", StringComparison.OrdinalIgnoreCase)))
+            {
+                // Do Nothing
             }
             else
             {

@@ -50,6 +50,7 @@ namespace IngameScript
         public Program()
         {
             Runtime.UpdateFrequency = UpdateFrequency.None;
+            ActionProfileInventoryTake.GridTerminalSystem = GridTerminalSystem;
         }
 
         public void Main(string argument, UpdateType updateSource)

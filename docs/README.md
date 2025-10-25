@@ -1,4 +1,4 @@
-# SequentialScript (User documentation)
+# Sequential Script (User documentation)
 
 - [About](#about)
 - [Syntax](#syntax)
@@ -8,6 +8,8 @@
     - [Delay](#delay)
     - [Comments](#comments)
 - [Action list](#action-list)
+- [Colors](#colors)
+- [Item DefinitionId](#definitionid)
 - [Known issues](#known-issues)
 - Examples
     - [Hydrogen charger](Examples_Hydrogen_Charger.md)
@@ -247,6 +249,9 @@ as @done
 | ----------------------------- | ---------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------- |
 | Any functional block          | Enable / On            | Turns the block on                                               | Block enabled                                                                                    |                       |                                                                                           |
 |                               | Disable / Off          | Turns the block off                                              | Block disabled                                                                                   |                       |                                                                                           |
+| Any terminal block (with inventory) | Take              | Takes a specific quantity of an item from other blocks and stores it in this block | The block has at least the specified quantity of the item                                       |                       |                                                                                           |
+|                               |                      |                                                                 |                                                                                                  | /ITEM:<DefinitionId>   | ITEM is required. See [DefinitionId](#definitionid). Example: MyObjectBuilder_Ore/Iron           |
+|                               |                      |                                                                 |                                                                                                  | /QUANTITY:<number>     | QUANTITY is optional. Default is 1.           |
 | Door (all types)              | Open                   | Opens the door                                                   | Door fully opened                                                                                |                       |                                                                                           |
 |                               | Close                  | Closes the door                                                  | Door fully closed                                                                                |                       |                                                                                           |
 |                               | Toggle                 | Switches the door state between open and closed                  | Door is open or closed (not moving)                                                              |                       |                                                                                           |
@@ -259,18 +264,27 @@ as @done
 | Connector                     | Connect / Lock         | Connects the connector                                           | Connector is connected (green color)                                                             |                       |                                                                                           |
 |                               | Disconnect / Unlock    | Disconnects the connector                                        | Connector is not connected (not green color)                                                     |                       |                                                                                           |
 |                               |                        |                                                                  |                                                                                                  | /FULL                 | Waits until the connector is out of range of the other connector (white color)             |
+|                               | Throw / ThrowOut       | Expels all items from the connector                           | Connector is empty and Throw out mode is activated                                                     |                       |                                                                                           |
+|                               | Keep                   | Keeps the items in the connector                              | Throw out mode is disabled                                                                       |                       |                                                                                           |
+| Conveyor Sorter               | Drain                  | Automatically extracts all possible items through the conveyor system | Drain All is enabled                                                                              |                       |                                                                                           |
+|                               | Idle                   | Stops the automatic extraction of items                            | Drain All is disabled                                                                             |                       |                                                                                           |
+|                               | Set                    | Sets which items can pass through this sorter                      | The configuration has been applied                                                                |                       |                                                                                           |
+|                               |                        |                                                                  |                                                                                                  | /MODE:<BLACK\|WHITE>   | Filtering mode: BLACK (blacklist) or WHITE (whitelist)           |
+|                               |                        |                                                                  |                                                                                                  | /ITEMS:<DefinitionId,DefinitionId,...> | Comma-separated list of item DefinitionIds. See [DefinitionId](#definitionid). Example: MyObjectBuilder_Ore/Iron,MyObjectBuilder_Component/SteelPlate           |
 | Rotor                         | Forward                | Moves in the positive direction                                  | Movement is positive<br>If an upper limit is set, checks that the angle has reached the limit    |                       |                                                                                           |
 |                               | Back                   | Moves in the negative direction                                  | Movement is negative<br>If a lower limit is set, checks that the angle has reached the limit     |                       |                                                                                           |
 |                               | Detach                 | Detaches the head from the base                                  | There is no head attached to the base                                                            |                       |                                                                                           |
 |                               | Set                    | Changes one or more properties of the block                      |                                                                                                  |                       |                                                                                           |
 |                               |                        |                                                                  |                                                                                                  | /MAX:<number>         | Sets the maximum displacement of the rotor                                                 |
 |                               |                        |                                                                  |                                                                                                  | /MIN:<number>         | Sets the minimum displacement of the rotor                                                 |
+|                               |                        |                                                                  |                                                                                                  | /SPEED:<number>       | Sets the rotation speed of the rotor (RPM)                                                 |
 | Piston                        | Extend                 | Moves in the positive direction                                  | Piston is fully extended                                                                         |                       |                                                                                           |
 |                               | Retract                | Moves in the negative direction                                  | Piston is fully retracted                                                                        |                       |                                                                                           |
 |                               | Reverse                | Reverses piston direction                                        | Piston is fully extended or retracted (not moving)                                               |                       |                                                                                           |
 |                               | Set                    | Changes one or more properties of the block                      |                                                                                                  |                       |                                                                                           |
 |                               |                        |                                                                  |                                                                                                  | /MAX:<number>         | Sets the maximum displacement of the piston                                                |
 |                               |                        |                                                                  |                                                                                                  | /MIN:<number>         | Sets the minimum displacement of the piston                                                |
+|                               |                        |                                                                  |                                                                                                  | /SPEED:<number>       | Sets the movement speed of the piston (m/s)                                                |
 | Sound block / Jukebox         | Play                   | Starts playing sound                                             | Immediately                                                                                      |                       |                                                                                           |
 |                               | Stop                   | Stops playing sound                                              | Immediately                                                                                      |                       |                                                                                           |
 | Timer block                   | Start                  | Starts the timer countdown                                       | Timer countdown ends                                                                             |                       |                                                                                           |
@@ -287,6 +301,11 @@ as @done
 |                               |                        |                                                                  |                                                                                                  | /BACKGROUND:<color>   | Sets the background color of the display<br>See [color](#color) type                      |
 |                               |                        |                                                                  |                                                                                                  | /COLOR:<color>        | Sets the text color of the display<br>See [color](#color) type                            |
 |                               |                        |                                                                  |                                                                                                  | /TEXT:<string>        | Sets the text to show on the display                                                       |
+|                               |                        |                                                                  |                                                                                                  | /PADDING:<float>      | Sets the text padding (space around text)                                                  |
+|                               |                        |                                                                  |                                                                                                  | /SIZE:<float>         | Sets the font size                                                                         |
+|                               |                        |                                                                  |                                                                                                  | /IMAGE:<image1,image2,...> | Sets one or more images to display (comma-separated). Image names must be valid for the block |
+|                               |                        |                                                                  |                                                                                                  | /SCRIPT:<scriptName>  | Sets a script for the display. Script name must be valid for the block                     |
+|                               |                        |                                                                  |                                                                                                  | /NONE                 | Clears the display content                                                                 |
 | Thrusters                     | Set                    | Changes one or more properties of the block                      | All properties already changed                                                                   |                       |                                                                                           |
 |                               |                        |                                                                  |                                                                                                  | /OVERRIDE:<number>    | Sets the override value.<br>Must be between 0 and 1, where 0 is disabled and 1 is 100%    |
 | Warhead                       | Arm                    | Arms the warhead                                                 | Warhead is armed                                                                                 |                       |                                                                                           |
@@ -318,6 +337,26 @@ There are several ways to set the color:
 Space Engineers uses the RGB option in-game:
 
 ![Ingame color RGB](ingame_color_rgb.png)
+
+
+## DefinitionId
+
+A DefinitionId is a unique identifier used in Space Engineers to refer to a specific type of item, block, or component. It usually follows the format:
+
+```
+MyObjectBuilder_Type/Subtype
+```
+
+For example:
+- `MyObjectBuilder_Ore/Iron` refers to Iron Ore
+- `MyObjectBuilder_Component/SteelPlate` refers to Steel Plate
+
+You can find DefinitionIds in the game’s modding documentation or by inspecting items in-game.
+
+**Official documentation:**
+- [Space Engineers ModAPI: DefinitionId](https://github.com/malware-dev/MDK-SE/wiki/Type-Definition-Listing#components)
+
+**Note:** When specifying multiple DefinitionIds (such as in /ITEMS), separate them with commas.
 
 **Warning:** Due to limitations in Space Engineers, some colors may not display properly. The best way to choose a color is to test it in-game first.
 
