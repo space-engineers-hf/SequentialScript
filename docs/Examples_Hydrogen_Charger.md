@@ -2,22 +2,25 @@
 
 [< User Manual](README.md)
 
+
 Components:
 
-- 6 Large Hydrogen Thrusters for waste the hydrogen from the tank.
+- 6 Large Hydrogen Thrusters to drain hydrogen from the tank.
 - 1 Piston
 - 1 Connector
-- 1 Small Hydrogen Tank 
+- 1 Small Hydrogen Tank
 - 1 Button Panel
-- 1 LCD Panel for showing a message with the current progress.
+- 1 LCD Panel to display the current progress.
+
 
 Sequence:
 
-- Disable Hydrogen Thrusters
-- Extend pinston until max position and connect both connectors. Display "Connecting..." in the LCD.
-- Enable "Stock pile" in the Small Hydrogen Tank. Display "Recharging..." in the diplay.
-- When the Hydrogen is full, disable "Stock pile" in the Small Hydrogen Tank, disconnect connectors and retract piston. Display "Disconnecting..." in the LCD.
+- Disable Hydrogen Thrusters.
+- Extend the piston to its maximum position and connect both connectors. Display "Connecting..." on the LCD.
+- Enable "Stockpile" mode on the Small Hydrogen Tank. Display "Recharging..." on the LCD.
+- When the Hydrogen Tank is full, disable "Stockpile" mode, disconnect the connectors, and retract the piston. Display "Disconnecting..." on the LCD.
 - Show "Disconnected".
+
 
 Video:
 

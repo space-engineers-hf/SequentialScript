@@ -2,26 +2,31 @@
 
 [< User Manual](README.md)
 
+
 Components:
 
-- 1 Slide Door. Door is disabled to force to open it using the sequence.
-- 2 Air Vent Full
+- 1 Sliding Door. The door is disabled to ensure it can only be opened using the sequence.
+- 2 Air Vents Full
 - 1 Oxygen Tank
-- 2 Sci-Fi button panels for open/close door and show status.
+- 2 Sci-Fi button panels to open/close the door and display status.
+
+
 
 Sequence:
 
 - Open
-    - Set Air Vents in "Depressurize mode". Display "Depressutizing..." in the button panel.
-    - Enable and open Door.
-    - Display "Open" in the button panel.
+    - Set Air Vents to "Depressurize mode". Display "Depressurizing..." on the button panel.
+    - Enable and open the Door.
+    - Display "Open" on the button panel.
 - Close
-    - Close Door.
-    - Disable Door and set Air Vents in "Pressurize mode". Display "Pressurizing..." in the button panel.
-    - Display "Closed" in the button panel.
+    - Close the Door.
+    - Disable the Door and set Air Vents to "Pressurize mode". Display "Pressurizing..." on the button panel.
+    - Display "Closed" on the button panel.
 - Switch
-    - If the door is open, close it
-    - If the door is closed, open it
+    - If the door is open, close it.
+    - If the door is closed, open it.
+
+
 
 Video:
 

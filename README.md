@@ -1,8 +1,8 @@
-# SequentialScript
+# Sequential Script
 
-It allows creating complex sequences that typically require **multiple timer blocks** by using **only one programming block** and writing some instructions in its "Custom Data" section.
+This tool allows you to create complex sequences that would typically require **multiple timer blocks** by using **only one programmable block** and writing some instructions in its "Custom Data" section.
 
-For example, it is possible to command button that depressurize the room before open the door.
+For example, you can set up a button that depressurizes a room before opening the door.
 
 ```
 [OPEN_DOOR]
@@ -13,10 +13,10 @@ as @room_depressurized
 when @room_depressurized
  Door -> Enable
  Door -> Open
-@as @door_opened
+as @door_opened
 ```
 
-Other example is a hinge starting to move after some piston is fully extended.
+Another example is a hinge that starts to move after a piston is fully extended.
 ```
 [PISTON_ROTOR]
 run
@@ -29,21 +29,21 @@ run
 as @hinge_moved
 ```
 
-## Download source code
+## Download Source Code
 
 Requirements:
  - Visual Studio 2022
  - Download and install https://github.com/malware-dev/MDK-SE
 
-Download both, this repository and [CommonScript](https://github.com/space-engineers-hf/CommonScript) repository in the same parent folder.
+Download both this repository and the [CommonScript](https://github.com/space-engineers-hf/CommonScript) repository into the same parent folder.
 For example:
 
 ```
 repos
-└─ CommonScript
-└─ SequentialScript
+└── CommonScript
+└── SequentialScript
 ```
 
-## User documentation
+## User Documentation
 
-Documentation about how to use SequentialScript is in the following [link](docs/README.md).
+You can find documentation on how to use SequentialScript at the following [link](docs/README.md).
