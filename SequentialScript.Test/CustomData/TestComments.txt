@@ -1,9 +1,0 @@
-﻿[OPEN]
-
-// Comment over block
-run // Comment in block
- 
- // Comment over instruction
- Door -> Open // Comment in instruction
-
-as @open_door // Comment at the end of the block

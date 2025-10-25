@@ -1,7 +1,4 @@
-﻿using IngameScript.Instructions;
-using Sandbox.Game.EntityComponents;
-using Sandbox.Game.GameSystems.Chat;
-using Sandbox.Game.Gui;
+﻿using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
@@ -10,7 +7,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Security.Policy;
 using System.Text;
 using VRage;
 using VRage.Collections;
@@ -21,6 +17,8 @@ using VRage.Game.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Game.ObjectBuilders.Definitions;
 using VRageMath;
+
+using IngameScript.Instructions;
 
 namespace IngameScript
 {
@@ -268,7 +266,7 @@ namespace IngameScript
             {
                 BlockName = blockName,
                 ActionName = arguments[""].Trim(),
-                Arguments = arguments.Where(x => !string.IsNullOrEmpty(x.Key)).ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase),
+                Arguments = arguments.Where(x => !string.IsNullOrEmpty(x.Key)).ToDictionarySafe(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase),
                 IsValid = isValid
             };
         }

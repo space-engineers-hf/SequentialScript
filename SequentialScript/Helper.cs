@@ -81,7 +81,8 @@ namespace IngameScript
         public static IDictionary<string, IEnumerable<IMyTerminalBlock>> CreateBlockDictionary(IEnumerable<string> blockNames, IEnumerable<IMyTerminalBlock> blockList, IEnumerable<IMyBlockGroup> blockGroup)
         {
             var result = new Dictionary<string, IEnumerable<IMyTerminalBlock>>(StringComparer.OrdinalIgnoreCase);
-            var blockDictionary = blockList.GroupBy(x => x.DisplayNameText, StringComparer.OrdinalIgnoreCase).ToDictionary(x => x.Key, x => x.AsEnumerable(), StringComparer.OrdinalIgnoreCase);
+            var blockDictionary = Enumerable.GroupBy(blockList, x => x.DisplayNameText, StringComparer.OrdinalIgnoreCase)
+                .ToDictionarySafe(x => x.Key, x => x.AsEnumerable(), StringComparer.OrdinalIgnoreCase);
             IEnumerable<IMyTerminalBlock> blocks;
 
             foreach (var blockName in blockNames)
