@@ -42,17 +42,16 @@ namespace IngameScript
                 }
                 else
                 {
-                    MyFixedPoint amount;
-                    IMyInventory inventory;
+                    IList<MyInventoryItem> items;
 
-                    inventory = block.GetItems();
-                    if (inventory == null)
+                    items = block.GetItems();
+                    if (items == null)
                     {
-                        throw new ArgumentException($"Item type '{itemType}' cannot store in '{block.DisplayNameText}'.");
+                        throw new ArgumentException($"No inventory found in '{block.DisplayNameText}'.");
                     }
                     else
                     {
-                        result = (block.ThrowOut && inventory.ItemCount == 0);
+                        result = (block.ThrowOut && items.Count == 0);
                     }
                 }
                 return result;

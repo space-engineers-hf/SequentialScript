@@ -40,7 +40,7 @@ namespace IngameScript
                 }
                 if (args.TryGetValue("SPEED", out value))
                 {
-                    block.Velocity = (ParseValue(value) ?? 0);
+                    block.Velocity = (float.Parse(value));
                 }
             };
 
@@ -60,7 +60,7 @@ namespace IngameScript
                 }
                 if (args.TryGetValue("SPEED", out value))
                 {
-                    result &= (block.Velocity == (ParseValue(value) ?? 0));
+                    result &= (block.Velocity == (float.Parse(value)));
                 }
                 return result;
             };
